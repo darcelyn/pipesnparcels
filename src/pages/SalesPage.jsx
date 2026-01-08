@@ -113,8 +113,8 @@ export default function SalesPage() {
       solution: "See all carrier rates instantly. Choose cheapest or fastest."
     },
     {
-      problem: "Paying $50-100/month for ShipStation or similar SaaS",
-      solution: "One-time setup + low monthly fee. No per-label charges."
+      problem: "Generic tools don't fit automotive parts workflows",
+      solution: "Custom-built for YOUR exact box sizes and processes."
     },
     {
       problem: "International shipments are complicated and time-consuming",
@@ -312,9 +312,11 @@ export default function SalesPage() {
                     <div className="text-slate-600">/month support</div>
                   </div>
                 </div>
-                <div className="bg-teal-50 rounded-lg p-4 mb-6">
-                  <p className="text-teal-900 font-medium">
-                    💰 Compare: ShipStation costs $99-229/mo + NO customization
+                <div className="bg-slate-100 rounded-lg p-4 mb-6">
+                  <p className="text-slate-700 text-sm leading-relaxed">
+                    <strong>Note:</strong> ShipStation Standard costs $89-149/mo for similar volume. 
+                    You're paying 2-3x more for a custom solution built exactly how YOU work, 
+                    with unlimited scaling and you own the code.
                   </p>
                 </div>
               </div>
@@ -363,64 +365,82 @@ export default function SalesPage() {
         </div>
       </section>
 
-      {/* ROI Calculator */}
+      {/* Honest Comparison */}
       <section className="py-20 px-4 bg-slate-50">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-              Calculate Your ROI
+              Why Pay More for Custom?
             </h2>
             <p className="text-xl text-slate-600">
-              See how much time and money you'll save
+              Let's be honest about the comparison
             </p>
           </div>
 
-          <Card className="border-slate-200">
+          <Card className="border-slate-200 mb-6">
             <CardContent className="p-8">
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-6">
-                  <h3 className="font-semibold text-slate-900 text-lg">Your Current Costs:</h3>
+                  <h3 className="font-semibold text-slate-900 text-lg flex items-center gap-2">
+                    <Package className="w-5 h-5 text-slate-600" />
+                    ShipStation Standard
+                  </h3>
                   <div>
-                    <p className="text-slate-700 mb-4">⏱️ Time spent creating labels daily:</p>
-                    <p className="text-2xl font-bold text-red-600">45-60 minutes</p>
+                    <p className="text-slate-700 mb-2">Monthly Cost (1,000 shipments):</p>
+                    <p className="text-2xl font-bold text-slate-900">$149/month</p>
                   </div>
-                  <div>
-                    <p className="text-slate-700 mb-4">💵 Monthly cost (staff time @ $20/hr):</p>
-                    <p className="text-2xl font-bold text-red-600">~$330/month</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-700 mb-4">📦 Overpaying on shipping (10%):</p>
-                    <p className="text-2xl font-bold text-red-600">~$200/month</p>
-                  </div>
-                  <div className="border-t pt-4">
-                    <p className="text-slate-700 mb-2">Total monthly waste:</p>
-                    <p className="text-3xl font-bold text-red-600">$530/month</p>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-slate-600">✓ Automated order imports</p>
+                    <p className="text-slate-600">✓ Rate comparison</p>
+                    <p className="text-slate-600">✓ Label printing</p>
+                    <p className="text-amber-600">⚠ Limited to 10 users</p>
+                    <p className="text-amber-600">⚠ Generic box sizes</p>
+                    <p className="text-amber-600">⚠ Tier upgrades as you grow</p>
+                    <p className="text-amber-600">⚠ Can't customize workflows</p>
                   </div>
                 </div>
 
                 <div className="space-y-6 bg-teal-50 rounded-lg p-6">
-                  <h3 className="font-semibold text-slate-900 text-lg">With ShipPro:</h3>
+                  <h3 className="font-semibold text-slate-900 text-lg flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-teal-600" />
+                    Our Custom Solution
+                  </h3>
                   <div>
-                    <p className="text-slate-700 mb-4">⏱️ Time spent daily:</p>
-                    <p className="text-2xl font-bold text-teal-700">15-20 minutes</p>
-                    <p className="text-sm text-teal-600">↓ 60% time savings</p>
+                    <p className="text-slate-700 mb-2">Monthly Cost (unlimited):</p>
+                    <p className="text-2xl font-bold text-slate-900">$299/month</p>
+                    <p className="text-xs text-slate-500 mt-1">+ $3,500 one-time setup</p>
                   </div>
-                  <div>
-                    <p className="text-slate-700 mb-4">💵 Monthly cost:</p>
-                    <p className="text-2xl font-bold text-teal-700">$299/month</p>
-                    <p className="text-sm text-teal-600">Support + updates included</p>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-teal-700 font-medium">✓ Everything ShipStation does</p>
+                    <p className="text-teal-700 font-medium">✓ Built for automotive parts</p>
+                    <p className="text-teal-700 font-medium">✓ Your exact box presets</p>
+                    <p className="text-teal-700 font-medium">✓ Unlimited users & shipments</p>
+                    <p className="text-teal-700 font-medium">✓ Flat rate, no tier surprises</p>
+                    <p className="text-teal-700 font-medium">✓ You own the code</p>
+                    <p className="text-teal-700 font-medium">✓ Customize anytime</p>
                   </div>
-                  <div>
-                    <p className="text-slate-700 mb-4">📦 Rate comparison savings:</p>
-                    <p className="text-2xl font-bold text-teal-700">~$200/month</p>
-                  </div>
-                  <div className="border-t border-teal-200 pt-4">
-                    <p className="text-slate-700 mb-2">Monthly savings:</p>
-                    <p className="text-3xl font-bold text-teal-700">$231/month</p>
-                    <p className="text-sm text-teal-600 mt-2">
-                      ✅ ROI in ~15 months
-                    </p>
-                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-teal-500 bg-teal-50">
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <h3 className="font-bold text-slate-900 text-lg">The Bottom Line:</h3>
+                <p className="text-slate-700">
+                  Yes, you're paying <strong>2x more monthly</strong> than ShipStation. 
+                  But you get a system built <strong>exactly</strong> for automotive parts shipping, 
+                  with unlimited growth and zero learning curve because it works how YOU already think.
+                </p>
+                <p className="text-slate-700">
+                  This isn't for everyone. It's for businesses tired of fighting generic software 
+                  and ready to invest in a tool that scales without surprises.
+                </p>
+                <div className="bg-white rounded-lg p-4 border border-teal-200">
+                  <p className="text-sm text-teal-900 font-medium">
+                    💡 Best for: 30+ daily shipments, frustrated with generic tools, want unlimited scaling
+                  </p>
                 </div>
               </div>
             </CardContent>

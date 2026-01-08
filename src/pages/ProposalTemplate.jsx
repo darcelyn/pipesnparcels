@@ -245,89 +245,95 @@ export default function ProposalTemplate() {
             </CardContent>
           </Card>
 
-          <div className="mt-6 p-6 bg-emerald-50 rounded-lg border border-emerald-200">
+          <div className="mt-6 p-6 bg-slate-100 rounded-lg border border-slate-300">
             <div className="flex items-start gap-3">
-              <DollarSign className="w-6 h-6 text-emerald-700 flex-shrink-0" />
+              <DollarSign className="w-6 h-6 text-slate-700 flex-shrink-0" />
               <div>
                 <p className="font-semibold text-slate-900 mb-2">Total First Year Investment</p>
-                <p className="text-3xl font-bold text-emerald-700 mb-2">$7,088</p>
-                <p className="text-sm text-slate-600">
-                  Compare to: ShipStation Pro ($229/mo = $2,748/year) + 30-60 min daily time waste (value: ~$4,000/year) = $6,748/year with NO customization
+                <p className="text-3xl font-bold text-slate-900 mb-2">$7,088</p>
+                <p className="text-sm text-slate-600 mb-3">
+                  <strong>For comparison:</strong> ShipStation Standard for 1,000 shipments/month costs $149-249/mo 
+                  (=$1,788-2,988 annually) with no customization and limited users.
+                </p>
+                <p className="text-sm text-slate-700 font-medium">
+                  You're paying 2-3x more for a custom solution built exactly for your business, 
+                  with unlimited scaling and you own the code.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ROI Analysis */}
+        {/* Value Justification */}
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Return on Investment</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">Why Custom vs. Generic?</h2>
           
           <div className="grid md:grid-cols-2 gap-6 mb-6">
-            <Card className="border-red-200 bg-red-50">
-              <CardHeader>
-                <CardTitle className="text-lg">Current Monthly Cost</CardTitle>
+            <Card className="border-slate-200">
+              <CardHeader className="bg-slate-50">
+                <CardTitle className="text-lg">Generic Solution (ShipStation)</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="pt-6">
+                <div className="space-y-3 mb-4">
                   <div className="flex justify-between">
-                    <span className="text-slate-700">Staff time (45 min/day @ $20/hr)</span>
-                    <span className="font-semibold">$330</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-700">Overpaying on shipping (10%)</span>
-                    <span className="font-semibold">$200</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-700">Current software (if any)</span>
-                    <span className="font-semibold">$99</span>
+                    <span className="text-slate-700">Monthly cost (1,000 shipments)</span>
+                    <span className="font-semibold">$149</span>
                   </div>
                   <Separator />
-                  <div className="flex justify-between">
-                    <span className="font-bold text-slate-900">Total</span>
-                    <span className="text-2xl font-bold text-red-600">$629/mo</span>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-slate-600">✓ Automated imports</p>
+                    <p className="text-slate-600">✓ Rate comparison</p>
+                    <p className="text-amber-600">⚠ Limited to 10 users</p>
+                    <p className="text-amber-600">⚠ Generic box sizes</p>
+                    <p className="text-amber-600">⚠ No customization</p>
+                    <p className="text-amber-600">⚠ Tier upgrades</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-emerald-200 bg-emerald-50">
-              <CardHeader>
-                <CardTitle className="text-lg">With ShipPro</CardTitle>
+            <Card className="border-teal-200 bg-teal-50">
+              <CardHeader className="bg-teal-100">
+                <CardTitle className="text-lg">ShipPro Custom Solution</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="pt-6">
+                <div className="space-y-3 mb-4">
                   <div className="flex justify-between">
-                    <span className="text-slate-700">Staff time (15 min/day @ $20/hr)</span>
-                    <span className="font-semibold">$110</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-700">Shipping optimization savings</span>
-                    <span className="font-semibold text-emerald-700">-$200</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-700">Monthly support fee</span>
+                    <span className="text-slate-700">Monthly cost (unlimited)</span>
                     <span className="font-semibold">$299</span>
                   </div>
                   <Separator />
-                  <div className="flex justify-between">
-                    <span className="font-bold text-slate-900">Total</span>
-                    <span className="text-2xl font-bold text-emerald-700">$209/mo</span>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-teal-700 font-medium">✓ Everything above, plus:</p>
+                    <p className="text-teal-700 font-medium">✓ Built for auto parts</p>
+                    <p className="text-teal-700 font-medium">✓ Your exact box presets</p>
+                    <p className="text-teal-700 font-medium">✓ Unlimited users & shipments</p>
+                    <p className="text-teal-700 font-medium">✓ Flat rate forever</p>
+                    <p className="text-teal-700 font-medium">✓ You own the code</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          <Card className="border-2 border-teal-500 bg-teal-50">
+          <Card className="border-2 border-slate-300">
             <CardContent className="p-6">
-              <div className="text-center">
-                <p className="text-slate-700 mb-2">Monthly Savings</p>
-                <p className="text-4xl font-bold text-teal-700 mb-4">$420/month</p>
+              <div className="space-y-4">
+                <h3 className="font-bold text-slate-900">The Honest Truth:</h3>
                 <p className="text-slate-700">
-                  <span className="font-semibold">ROI Timeline:</span> Initial investment recovered in approximately 8 months. 
-                  Annual savings of $5,040 thereafter.
+                  You're paying <strong>2x more monthly</strong> than ShipStation Standard. 
+                  But generic tools work great for simple businesses shipping 10-20 packages daily.
                 </p>
+                <p className="text-slate-700">
+                  When you're doing 30-40+ shipments with varying part types (exhaust systems, small components, 
+                  international orders), a custom solution eliminates frustration and scales without surprises.
+                </p>
+                <div className="bg-teal-50 rounded-lg p-4 border border-teal-200 mt-4">
+                  <p className="text-sm text-slate-800">
+                    <strong>This is for businesses that:</strong> Ship 800+ packages/month, are frustrated with 
+                    generic workflows, need unlimited scaling, and want software that works exactly how they think.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
