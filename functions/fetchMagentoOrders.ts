@@ -10,13 +10,12 @@ Deno.serve(async (req) => {
         }
 
         // Get Magento credentials from secrets
-        const magentoSecret = Deno.env.get("magento");
-        if (!magentoSecret) {
-            return Response.json({ error: 'Magento credentials not configured' }, { status: 500 });
+        const store_url = Deno.env.get("magento_store_url");
+        const api_key = Deno.env.get("magento_api_key");
+        
+        if (!store_url || !api_key) {
+            return Response.json({ error: 'Magento credentials not configured. Please set magento_store_url and magento_api_key secrets.' }, { status: 500 });
         }
-
-        const magentoConfig = JSON.parse(magentoSecret);
-        const { store_url, api_key } = magentoConfig;
 
         // Fetch orders from Magento API
         const response = await fetch(`${store_url}/rest/V1/orders?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=processing&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`, {
