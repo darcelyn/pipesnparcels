@@ -58,12 +58,23 @@ Deno.serve(async (req) => {
             });
 
             if (existingOrders.length === 0) {
+                // Map Magento priority if available, otherwise default to 'normal'
+                let priority = 'normal';
+                if (magentoOrder.extension_attributes?.priority) {
+                    const magentoPriority = magentoOrder.extension_attributes.priority.toLowerCase();
+                    if (magentoPriority === 'urgent' || magentoPriority === 'rush' || magentoPriority === 'high') {
+                        priority = 'rush';
+                    } else if (magentoPriority === 'priority' || magentoPriority === 'medium') {
+                        priority = 'priority';
+                    }
+                }
+                
                 // Create new order in our system
                 const orderData = {
                     order_number: magentoOrder.increment_id,
                     source: 'magento',
                     status: 'pending',
-                    priority: 'normal',
+                    priority: priority,
                     customer_name: `${magentoOrder.customer_firstname} ${magentoOrder.customer_lastname}`,
                     customer_email: magentoOrder.customer_email,
                     shipping_address: {
