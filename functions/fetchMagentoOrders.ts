@@ -13,8 +13,14 @@ Deno.serve(async (req) => {
         const store_url = Deno.env.get("magento_store_url");
         const api_key = Deno.env.get("magento_api_key");
         
+        console.log('Store URL:', store_url ? 'SET' : 'NOT SET');
+        console.log('API Key:', api_key ? 'SET' : 'NOT SET');
+        
         if (!store_url || !api_key) {
-            return Response.json({ error: 'Magento credentials not configured. Please set magento_store_url and magento_api_key secrets.' }, { status: 500 });
+            return Response.json({ 
+                error: 'Magento credentials not configured. Please set magento_store_url and magento_api_key secrets.',
+                debug: { store_url: !!store_url, api_key: !!api_key }
+            }, { status: 500 });
         }
 
         // Fetch orders from Magento API
