@@ -1,0 +1,103 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+
+Deno.serve(async (req) => {
+    try {
+        const base44 = createClientFromRequest(req);
+        const user = await base44.auth.me();
+
+        if (!user) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Get Magento credentials from secrets
+        const magentoSecret = Deno.env.get("magento");
+        if (!magentoSecret) {
+            return Response.json({ error: 'Magento credentials not configured' }, { status: 500 });
+        }
+
+        const magentoConfig = JSON.parse(magentoSecret);
+        const { store_url, api_key } = magentoConfig;
+
+        // Fetch orders from Magento API
+        const response = await fetch(`${store_url}/rest/V1/orders?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=processing&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`, {
+            headers: {
+                'Authorization': `Bearer ${api_key}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Magento API error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        // Transform Magento orders to our Order entity format
+        const transformedOrders = [];
+        
+        for (const magentoOrder of data.items || []) {
+            const shippingAddress = magentoOrder.extension_attributes?.shipping_assignments?.[0]?.shipping?.address || {};
+            
+            // Calculate total weight from items
+            let totalWeight = 0;
+            const items = (magentoOrder.items || []).map(item => {
+                const weight = parseFloat(item.weight || 0);
+                totalWeight += weight * item.qty_ordered;
+                
+                return {
+                    sku: item.sku,
+                    name: item.name,
+                    quantity: item.qty_ordered,
+                    weight: weight
+                };
+            });
+
+            // Check if order already exists in our system
+            const existingOrders = await base44.asServiceRole.entities.Order.filter({ 
+                order_number: magentoOrder.increment_id 
+            });
+
+            if (existingOrders.length === 0) {
+                // Create new order in our system
+                const orderData = {
+                    order_number: magentoOrder.increment_id,
+                    source: 'magento',
+                    status: 'pending',
+                    priority: 'normal',
+                    customer_name: `${magentoOrder.customer_firstname} ${magentoOrder.customer_lastname}`,
+                    customer_email: magentoOrder.customer_email,
+                    shipping_address: {
+                        street1: shippingAddress.street?.[0] || '',
+                        street2: shippingAddress.street?.[1] || '',
+                        city: shippingAddress.city || '',
+                        state: shippingAddress.region || '',
+                        zip: shippingAddress.postcode || '',
+                        country: shippingAddress.country_id || 'US',
+                        phone: shippingAddress.telephone || ''
+                    },
+                    items: items,
+                    total_weight: totalWeight,
+                    order_value: parseFloat(magentoOrder.grand_total || 0),
+                    is_international: shippingAddress.country_id !== 'US'
+                };
+
+                const newOrder = await base44.asServiceRole.entities.Order.create(orderData);
+                transformedOrders.push(newOrder);
+            }
+        }
+
+        return Response.json({
+            success: true,
+            imported_count: transformedOrders.length,
+            total_magento_orders: data.items?.length || 0,
+            orders: transformedOrders
+        });
+
+    } catch (error) {
+        console.error('Error fetching Magento orders:', error);
+        return Response.json({ 
+            error: error.message,
+            details: 'Failed to fetch orders from Magento'
+        }, { status: 500 });
+    }
+});
