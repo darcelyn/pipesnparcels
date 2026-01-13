@@ -40,7 +40,7 @@ export default function ProposalTemplate() {
               <Package className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">ShipPro</h1>
+              <h1 className="text-3xl font-bold text-slate-900">Pipes & Parcels</h1>
               <p className="text-slate-600">Custom Shipping Label Solution</p>
             </div>
           </div>
@@ -294,7 +294,7 @@ export default function ProposalTemplate() {
 
             <Card className="border-teal-200 bg-teal-50">
               <CardHeader className="bg-teal-100">
-                <CardTitle className="text-lg">ShipPro Custom Solution</CardTitle>
+                <CardTitle className="text-lg">Pipes & Parcels Custom Solution</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-3 mb-4">
@@ -358,7 +358,7 @@ export default function ProposalTemplate() {
           <Card className="border-slate-300">
             <CardContent className="p-8">
               <p className="text-slate-700 mb-8">
-                By signing below, {clientName} accepts this proposal and authorizes ShipPro to proceed with 
+                By signing below, {clientName} accepts this proposal and authorizes Pipes & Parcels to proceed with 
                 the implementation as outlined above.
               </p>
               
@@ -379,7 +379,7 @@ export default function ProposalTemplate() {
                 </div>
 
                 <div>
-                  <p className="text-sm text-slate-500 mb-2">ShipPro Representative</p>
+                  <p className="text-sm text-slate-500 mb-2">Pipes & Parcels Representative</p>
                   <div className="border-b-2 border-slate-300 h-16 mb-4"></div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
@@ -399,8 +399,8 @@ export default function ProposalTemplate() {
 
         {/* Footer */}
         <div className="text-center text-sm text-slate-500 border-t pt-8">
-          <p>Questions? Contact us at sales@shippro.com or (555) 123-4567</p>
-          <p className="mt-2">ShipPro Custom Shipping Solutions • Proposal Valid Until {format(validUntil, 'MMMM d, yyyy')}</p>
+          <p>Questions? Contact us at sales@pipesandparcels.com or (555) 123-4567</p>
+          <p className="mt-2">Pipes & Parcels Custom Shipping Solutions • Proposal Valid Until {format(validUntil, 'MMMM d, yyyy')}</p>
         </div>
       </div>
 
