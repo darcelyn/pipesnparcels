@@ -19,7 +19,8 @@ import {
   ChevronRight,
   Globe,
   AlertCircle,
-  Flag
+  Flag,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -38,6 +39,26 @@ export default function OrderCard({
       queryClient.invalidateQueries({ queryKey: ['orders'] });
     }
   });
+
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (password) => {
+      const response = await base44.functions.invoke('deleteOrder', { orderId: order.id, password });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onError: (error) => {
+      alert(error.response?.data?.error || 'Failed to delete order');
+    }
+  });
+
+  const handleDelete = () => {
+    const password = prompt('Enter password to delete this order:');
+    if (password) {
+      deleteOrderMutation.mutate(password);
+    }
+  };
   const address = order.shipping_address || {};
   
   return (
@@ -126,6 +147,16 @@ export default function OrderCard({
                     <AlertCircle className="w-5 h-5" />
                   </div>
                 )}
+                <Button 
+                  variant="outline"
+                  size="icon"
+                  onClick={handleDelete}
+                  disabled={deleteOrderMutation.isPending}
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                  title="Delete order"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
                 <Button 
                   onClick={() => onCreateLabel(order)}
                   className="bg-teal-600 hover:bg-teal-700 text-white"
