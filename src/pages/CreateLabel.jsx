@@ -278,20 +278,31 @@ export default function CreateLabel() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
                     <div>
-                      <h4 className="text-sm font-medium text-slate-500 mb-2">Items</h4>
+                      <h4 className="text-sm font-medium text-slate-500 mb-3">Items to Pack</h4>
                       <div className="space-y-2">
                         {order.items?.map((item, idx) => (
-                          <div key={idx} className="flex justify-between text-sm">
-                            <span className="text-slate-700">{item.name}</span>
-                            <span className="text-slate-500">x{item.quantity}</span>
+                          <div key={idx} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                            <div className="flex justify-between items-start mb-1">
+                              <span className="font-medium text-slate-900">{item.name}</span>
+                              <span className="text-sm font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded">
+                                Qty: {item.quantity}
+                              </span>
+                            </div>
+                            <div className="flex gap-4 text-xs text-slate-500">
+                              {item.sku && <span>SKU: {item.sku}</span>}
+                              {item.weight && <span>Weight: {item.weight} lbs each</span>}
+                            </div>
                           </div>
                         )) || (
                           <p className="text-sm text-slate-400">No items listed</p>
                         )}
                       </div>
                     </div>
+                    
+                    <Separator />
+                    
                     <AddressDisplay 
                       address={{ name: order.customer_name, ...order.shipping_address }}
                       title="Ship To"
