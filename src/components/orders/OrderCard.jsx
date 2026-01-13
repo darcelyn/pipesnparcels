@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { base44 } from '@/api/base44Client';
-import { useMutation, useQueryClient } from '@tantml:react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import PackingList from './PackingList';
 import {
   DropdownMenu,
