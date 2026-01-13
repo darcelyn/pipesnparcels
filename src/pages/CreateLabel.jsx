@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import BoxSelector from "@/components/shipping/BoxSelector";
 import RateComparison from "@/components/shipping/RateComparison";
 import AddressDisplay from "@/components/shipping/AddressDisplay";
+import PackingList from "@/components/orders/PackingList";
 import { 
   Package, 
   Scale, 
@@ -17,7 +18,8 @@ import {
   CheckCircle,
   ArrowLeft,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  FileText
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -54,6 +56,7 @@ export default function CreateLabel() {
   const [isCreatingLabel, setIsCreatingLabel] = useState(false);
   const [labelCreated, setLabelCreated] = useState(false);
   const [createdShipment, setCreatedShipment] = useState(null);
+  const [showPackingList, setShowPackingList] = useState(false);
 
   const { data: order, isLoading: orderLoading } = useQuery({
     queryKey: ['order', orderId],
@@ -162,6 +165,18 @@ export default function CreateLabel() {
     setIsCreatingLabel(false);
   };
 
+  const handlePrintPackingList = () => {
+    setShowPackingList(true);
+    setTimeout(() => {
+      window.print();
+      setShowPackingList(false);
+    }, 100);
+  };
+
+  if (showPackingList && order) {
+    return <PackingList order={order} />;
+  }
+
   if (orderLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -249,20 +264,32 @@ export default function CreateLabel() {
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => window.location.href = createPageUrl('Orders')}
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Create Shipping Label</h1>
-            {order && (
-              <p className="text-slate-500">Order #{order.order_number}</p>
-            )}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => window.location.href = createPageUrl('Orders')}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Create Shipping Label</h1>
+              {order && (
+                <p className="text-slate-500">Order #{order.order_number}</p>
+              )}
+            </div>
           </div>
+          {order && (
+            <Button
+              variant="outline"
+              onClick={handlePrintPackingList}
+              className="border-slate-300"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Print Packing List
+            </Button>
+          )}
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">

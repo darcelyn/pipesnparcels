@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { base44 } from '@/api/base44Client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tantml:react-query';
+import PackingList from './PackingList';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +21,10 @@ import {
   Globe,
   AlertCircle,
   Flag,
-  Trash2
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Printer
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -32,6 +36,8 @@ export default function OrderCard({
   showCheckbox = true 
 }) {
   const queryClient = useQueryClient();
+  const [showItems, setShowItems] = useState(false);
+  const [showPackingList, setShowPackingList] = useState(false);
 
   const updatePriorityMutation = useMutation({
     mutationFn: (priority) => base44.entities.Order.update(order.id, { priority }),
@@ -59,7 +65,19 @@ export default function OrderCard({
       deleteOrderMutation.mutate(password);
     }
   };
+  const handlePrintPackingList = () => {
+    setShowPackingList(true);
+    setTimeout(() => {
+      window.print();
+      setShowPackingList(false);
+    }, 100);
+  };
+
   const address = order.shipping_address || {};
+  
+  if (showPackingList) {
+    return <PackingList order={order} />;
+  }
   
   return (
     <Card className={`transition-all duration-200 hover:shadow-md ${selected ? 'ring-2 ring-teal-500 bg-teal-50/30' : 'bg-white'}`}>
@@ -129,10 +147,14 @@ export default function OrderCard({
               </div>
 
               <div>
-                <div className="flex items-center gap-1 text-sm text-slate-600">
+                <button
+                  onClick={() => setShowItems(!showItems)}
+                  className="flex items-center gap-1 text-sm text-slate-600 hover:text-teal-600 transition-colors"
+                >
                   <Package className="w-3.5 h-3.5 text-slate-400" />
                   <span>{order.items?.length || 0} item(s)</span>
-                </div>
+                  {showItems ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
                 {order.total_weight && (
                   <div className="flex items-center gap-1 text-sm text-slate-600 mt-1">
                     <Scale className="w-3.5 h-3.5 text-slate-400" />
@@ -147,6 +169,15 @@ export default function OrderCard({
                     <AlertCircle className="w-5 h-5" />
                   </div>
                 )}
+                <Button 
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePrintPackingList}
+                  className="border-slate-300"
+                  title="Print packing list"
+                >
+                  <Printer className="w-4 h-4" />
+                </Button>
                 <Button 
                   variant="outline"
                   size="icon"
@@ -166,6 +197,30 @@ export default function OrderCard({
                 </Button>
               </div>
             </div>
+
+            {/* Expandable Items List */}
+            {showItems && order.items && order.items.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <div className="space-y-2">
+                  {order.items.map((item, idx) => (
+                    <div key={idx} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-medium text-slate-900">{item.name}</p>
+                          <div className="flex gap-3 text-xs text-slate-500 mt-1">
+                            {item.sku && <span>SKU: {item.sku}</span>}
+                            {item.weight && <span>Weight: {item.weight} lbs</span>}
+                          </div>
+                        </div>
+                        <span className="text-sm font-semibold text-teal-700 bg-teal-50 px-2 py-1 rounded">
+                          Qty: {item.quantity}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
