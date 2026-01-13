@@ -25,6 +25,17 @@ export default function Orders() {
     source: 'all'
   });
 
+  const syncMagentoMutation = useMutation({
+    mutationFn: () => base44.functions.invoke('fetchMagentoOrders'),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      alert(`✓ Synced ${response.data.imported_count} new orders from Magento`);
+    },
+    onError: (error) => {
+      alert(`Failed to sync: ${error.message}`);
+    }
+  });
+
   const { data: orders = [], isLoading, refetch, isFetching } = useQuery({
     queryKey: ['orders'],
     queryFn: () => base44.entities.Order.list('-created_date', 100)
@@ -124,6 +135,15 @@ export default function Orders() {
             </p>
           </div>
           <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => syncMagentoMutation.mutate()}
+              disabled={syncMagentoMutation.isPending}
+              className="border-teal-300 text-teal-700 hover:bg-teal-50"
+            >
+              <Package className={`w-4 h-4 mr-2 ${syncMagentoMutation.isPending ? 'animate-spin' : ''}`} />
+              Sync Magento
+            </Button>
             <Button 
               variant="outline" 
               onClick={() => refetch()}
