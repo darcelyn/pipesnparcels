@@ -31,7 +31,7 @@ export default function Orders() {
   });
 
   const filteredOrders = useMemo(() => {
-    return orders.filter(order => {
+    let filtered = orders.filter(order => {
       // Search filter
       if (filters.search) {
         const search = filters.search.toLowerCase();
@@ -59,6 +59,17 @@ export default function Orders() {
       
       return true;
     });
+    
+    // Sort by priority: rush > priority > normal
+    const priorityOrder = { rush: 0, priority: 1, normal: 2 };
+    filtered.sort((a, b) => {
+      const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+      if (priorityDiff !== 0) return priorityDiff;
+      // Then by created date (newest first)
+      return new Date(b.created_date) - new Date(a.created_date);
+    });
+    
+    return filtered;
   }, [orders, filters]);
 
   const pendingOrders = filteredOrders.filter(o => o.status === 'pending' || o.status === 'processing');
