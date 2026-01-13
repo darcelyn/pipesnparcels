@@ -1,9 +1,21 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { Package, MapPin } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
 export default function PackingList({ order }) {
   const address = order.shipping_address || {};
+
+  const { data: packingConfigs = [] } = useQuery({
+    queryKey: ['packingConfigs'],
+    queryFn: () => base44.entities.PackingConfig.list()
+  });
+
+  const getComponentsForSku = (sku) => {
+    const config = packingConfigs.find(c => c.sku === sku);
+    return config?.components || [];
+  };
 
   return (
     <div className="bg-white p-8 max-w-4xl mx-auto print:p-4">
@@ -81,29 +93,50 @@ export default function PackingList({ order }) {
             </thead>
             <tbody>
               {order.items?.length > 0 ? (
-                order.items.map((item, idx) => (
-                  <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50">
-                    <td className="p-3 text-slate-900 font-mono text-sm">
-                      {item.sku || 'N/A'}
-                    </td>
-                    <td className="p-3 text-slate-900 font-medium">
-                      {item.name}
-                    </td>
-                    <td className="p-3 text-center">
-                      <span className="inline-block bg-teal-100 text-teal-900 px-4 py-1 rounded-full font-bold text-lg">
-                        {item.quantity}
-                      </span>
-                    </td>
-                    <td className="p-3 text-center text-slate-700">
-                      {item.weight ? `${item.weight} lbs` : '-'}
-                    </td>
-                    <td className="p-3">
-                      <div className="flex justify-center">
-                        <div className="w-8 h-8 border-2 border-slate-400 rounded"></div>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                order.items.map((item, idx) => {
+                  const components = getComponentsForSku(item.sku);
+                  return (
+                    <React.Fragment key={idx}>
+                      <tr className="border-b border-slate-200 hover:bg-slate-50">
+                        <td className="p-3 text-slate-900 font-mono text-sm">
+                          {item.sku || 'N/A'}
+                        </td>
+                        <td className="p-3 text-slate-900 font-medium">
+                          {item.name}
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className="inline-block bg-teal-100 text-teal-900 px-4 py-1 rounded-full font-bold text-lg">
+                            {item.quantity}
+                          </span>
+                        </td>
+                        <td className="p-3 text-center text-slate-700">
+                          {item.weight ? `${item.weight} lbs` : '-'}
+                        </td>
+                        <td className="p-3">
+                          <div className="flex justify-center">
+                            <div className="w-8 h-8 border-2 border-slate-400 rounded"></div>
+                          </div>
+                        </td>
+                      </tr>
+                      {components.length > 0 && (
+                        <tr className="bg-teal-50 border-b border-teal-200">
+                          <td colSpan="5" className="p-3 pl-10">
+                            <div className="flex items-start gap-2">
+                              <span className="text-xs font-semibold text-teal-900 uppercase">Includes:</span>
+                              <div className="flex flex-wrap gap-2">
+                                {components.map((comp, compIdx) => (
+                                  <span key={compIdx} className="text-xs bg-white text-teal-900 px-2 py-1 rounded border border-teal-200">
+                                    {comp}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan="5" className="p-4 text-center text-slate-500">

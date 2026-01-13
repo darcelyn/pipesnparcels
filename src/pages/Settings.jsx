@@ -23,8 +23,11 @@ import {
   Loader2,
   Plus,
   Trash2,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Package,
+  X
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Settings() {
   const queryClient = useQueryClient();
@@ -42,6 +45,11 @@ export default function Settings() {
   const { data: boxes = [] } = useQuery({
     queryKey: ['boxes'],
     queryFn: () => base44.entities.BoxPreset.list('name')
+  });
+
+  const { data: packingConfigs = [] } = useQuery({
+    queryKey: ['packingConfigs'],
+    queryFn: () => base44.entities.PackingConfig.list('sku')
   });
 
   const [formData, setFormData] = useState({
@@ -77,6 +85,15 @@ export default function Settings() {
     is_active: true,
     is_custom: true
   });
+
+  const [newPackingConfig, setNewPackingConfig] = useState({
+    sku: '',
+    product_name: '',
+    components: [],
+    notes: ''
+  });
+
+  const [componentInput, setComponentInput] = useState('');
 
   useEffect(() => {
     if (settings) {
@@ -120,6 +137,27 @@ export default function Settings() {
     }
   });
 
+  const createPackingConfigMutation = useMutation({
+    mutationFn: (data) => base44.entities.PackingConfig.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['packingConfigs'] });
+      setNewPackingConfig({
+        sku: '',
+        product_name: '',
+        components: [],
+        notes: ''
+      });
+      setComponentInput('');
+    }
+  });
+
+  const deletePackingConfigMutation = useMutation({
+    mutationFn: (id) => base44.entities.PackingConfig.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['packingConfigs'] });
+    }
+  });
+
   const handleFieldChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -148,6 +186,29 @@ export default function Settings() {
     }
   };
 
+  const handleAddComponent = () => {
+    if (componentInput.trim()) {
+      setNewPackingConfig(prev => ({
+        ...prev,
+        components: [...prev.components, componentInput.trim()]
+      }));
+      setComponentInput('');
+    }
+  };
+
+  const handleRemoveComponent = (index) => {
+    setNewPackingConfig(prev => ({
+      ...prev,
+      components: prev.components.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleAddPackingConfig = () => {
+    if (newPackingConfig.sku && newPackingConfig.components.length > 0) {
+      createPackingConfigMutation.mutate(newPackingConfig);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -169,6 +230,7 @@ export default function Settings() {
             <TabsTrigger value="company">Company</TabsTrigger>
             <TabsTrigger value="carriers">Carriers</TabsTrigger>
             <TabsTrigger value="boxes">Box Presets</TabsTrigger>
+            <TabsTrigger value="packing">Packing Configs</TabsTrigger>
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
           </TabsList>
 
@@ -398,6 +460,151 @@ export default function Settings() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="packing">
+            <Card className="border-slate-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="w-5 h-5 text-teal-600" />
+                  Packing Configurations
+                </CardTitle>
+                <CardDescription>
+                  Define what components are included with each SKU/part number
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto mb-6">
+                  {packingConfigs.map((config) => (
+                    <div 
+                      key={config.id}
+                      className="p-4 bg-slate-50 rounded-lg border border-slate-200"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <p className="font-semibold text-slate-900">{config.sku}</p>
+                          {config.product_name && (
+                            <p className="text-sm text-slate-600">{config.product_name}</p>
+                          )}
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => deletePackingConfigMutation.mutate(config.id)}
+                          className="text-slate-400 hover:text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="mt-2">
+                        <p className="text-xs font-medium text-slate-500 mb-1">Components:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {config.components?.map((component, idx) => (
+                            <span 
+                              key={idx}
+                              className="inline-block bg-teal-100 text-teal-900 px-2 py-0.5 rounded text-xs"
+                            >
+                              {component}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      {config.notes && (
+                        <p className="text-sm text-slate-600 mt-2 italic">{config.notes}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-6 border-t">
+                  <h4 className="font-medium text-slate-900 mb-4">Add New Packing Configuration</h4>
+                  <div className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>SKU / Part Number *</Label>
+                        <Input
+                          value={newPackingConfig.sku}
+                          onChange={(e) => setNewPackingConfig(prev => ({ ...prev, sku: e.target.value }))}
+                          placeholder="ABC-123"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>Product Name</Label>
+                        <Input
+                          value={newPackingConfig.product_name}
+                          onChange={(e) => setNewPackingConfig(prev => ({ ...prev, product_name: e.target.value }))}
+                          placeholder="Optional product name"
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Components *</Label>
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          value={componentInput}
+                          onChange={(e) => setComponentInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddComponent();
+                            }
+                          }}
+                          placeholder="e.g., CAN, HEADER HARDWARE KIT, BOLT"
+                        />
+                        <Button 
+                          onClick={handleAddComponent}
+                          variant="outline"
+                          type="button"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      {newPackingConfig.components.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {newPackingConfig.components.map((component, idx) => (
+                            <span 
+                              key={idx}
+                              className="inline-flex items-center gap-1 bg-teal-100 text-teal-900 px-3 py-1 rounded-full text-sm"
+                            >
+                              {component}
+                              <button
+                                onClick={() => handleRemoveComponent(idx)}
+                                className="hover:text-red-600"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label>Notes</Label>
+                      <Textarea
+                        value={newPackingConfig.notes}
+                        onChange={(e) => setNewPackingConfig(prev => ({ ...prev, notes: e.target.value }))}
+                        placeholder="Any special packing instructions..."
+                        className="mt-1"
+                        rows={3}
+                      />
+                    </div>
+
+                    <Button 
+                      onClick={handleAddPackingConfig}
+                      disabled={createPackingConfigMutation.isPending || !newPackingConfig.sku || newPackingConfig.components.length === 0}
+                      className="bg-teal-600 hover:bg-teal-700"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Configuration
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="preferences">
