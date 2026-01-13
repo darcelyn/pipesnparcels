@@ -3,13 +3,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/ui/StatusBadge";
 import CarrierLogo from "@/components/ui/CarrierLogo";
+import { base44 } from '@/api/base44Client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   MapPin, 
   Calendar, 
   DollarSign,
   Printer,
   ExternalLink,
-  Package
+  Package,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -36,7 +39,28 @@ export default function ShipmentCard({
     );
   }
 
+  const queryClient = useQueryClient();
   const address = shipment.destination_address || {};
+
+  const deleteShipmentMutation = useMutation({
+    mutationFn: async (password) => {
+      const response = await base44.functions.invoke('deleteShipment', { shipmentId: shipment.id, password });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shipments'] });
+    },
+    onError: (error) => {
+      alert(error.response?.data?.error || 'Failed to delete shipment');
+    }
+  });
+
+  const handleDelete = () => {
+    const password = prompt('Enter password to delete this shipment:');
+    if (password) {
+      deleteShipmentMutation.mutate(password);
+    }
+  };
 
   return (
     <Card className="border-slate-200 hover:shadow-md transition-shadow">
@@ -77,6 +101,15 @@ export default function ShipmentCard({
                 <span className="font-semibold text-slate-900">
                   ${shipment.shipping_cost?.toFixed(2)}
                 </span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleteShipmentMutation.isPending}
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
                 <Button 
                   variant="outline" 
                   size="sm"
