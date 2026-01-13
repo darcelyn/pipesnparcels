@@ -1,8 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { base44 } from '@/api/base44Client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   MapPin, 
   Package, 
@@ -10,7 +18,8 @@ import {
   Clock, 
   ChevronRight,
   Globe,
-  AlertCircle
+  AlertCircle,
+  Flag
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -21,6 +30,14 @@ export default function OrderCard({
   onCreateLabel,
   showCheckbox = true 
 }) {
+  const queryClient = useQueryClient();
+
+  const updatePriorityMutation = useMutation({
+    mutationFn: (priority) => base44.entities.Order.update(order.id, { priority }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    }
+  });
   const address = order.shipping_address || {};
   
   return (
@@ -42,9 +59,29 @@ export default function OrderCard({
                   #{order.order_number}
                 </span>
                 <StatusBadge status={order.status} size="sm" />
-                {order.priority !== 'normal' && (
-                  <StatusBadge status={order.priority} size="sm" />
-                )}
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity">
+                      <StatusBadge status={order.priority} size="sm" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => updatePriorityMutation.mutate('rush')}>
+                      <Flag className="w-4 h-4 mr-2 text-red-600" />
+                      Rush
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => updatePriorityMutation.mutate('priority')}>
+                      <Flag className="w-4 h-4 mr-2 text-amber-600" />
+                      Priority
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => updatePriorityMutation.mutate('normal')}>
+                      <Flag className="w-4 h-4 mr-2 text-slate-400" />
+                      Normal
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 {order.is_international && (
                   <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
                     <Globe className="w-3 h-3" />
