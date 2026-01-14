@@ -91,43 +91,33 @@ Deno.serve(async (req) => {
             
             // Create new order in our system
             const orderData = {
-                // Map Magento priority if available, otherwise default to 'normal'
-                let priority = 'normal';
-                if (magentoOrder.extension_attributes?.priority) {
-                    const magentoPriority = magentoOrder.extension_attributes.priority.toLowerCase();
-                    if (magentoPriority === 'urgent' || magentoPriority === 'rush' || magentoPriority === 'high') {
-                        priority = 'rush';
-                    } else if (magentoPriority === 'priority' || magentoPriority === 'medium') {
-                        priority = 'priority';
-                    }
-                }
-                
-                // Create new order in our system
-                const orderData = {
-                    order_number: magentoOrder.increment_id,
-                    source: 'magento',
-                    status: 'pending',
-                    priority: priority,
-                    customer_name: `${magentoOrder.customer_firstname} ${magentoOrder.customer_lastname}`,
-                    customer_email: magentoOrder.customer_email,
-                    shipping_address: {
-                        street1: shippingAddress.street?.[0] || '',
-                        street2: shippingAddress.street?.[1] || '',
-                        city: shippingAddress.city || '',
-                        state: shippingAddress.region || '',
-                        zip: shippingAddress.postcode || '',
-                        country: shippingAddress.country_id || 'US',
-                        phone: shippingAddress.telephone || ''
-                    },
-                    items: items,
-                    total_weight: totalWeight,
-                    order_value: parseFloat(magentoOrder.grand_total || 0),
-                    is_international: shippingAddress.country_id !== 'US'
-                };
+                order_number: magentoOrder.increment_id,
+                source: 'magento',
+                status: 'pending',
+                priority: priority,
+                customer_name: `${magentoOrder.customer_firstname} ${magentoOrder.customer_lastname}`,
+                customer_email: magentoOrder.customer_email,
+                shipping_address: {
+                    street1: shippingAddress.street?.[0] || '',
+                    street2: shippingAddress.street?.[1] || '',
+                    city: shippingAddress.city || '',
+                    state: shippingAddress.region || '',
+                    zip: shippingAddress.postcode || '',
+                    country: shippingAddress.country_id || 'US',
+                    phone: shippingAddress.telephone || ''
+                },
+                items: items,
+                total_weight: totalWeight,
+                order_value: parseFloat(magentoOrder.grand_total || 0),
+                is_international: shippingAddress.country_id !== 'US'
+            };
 
-                const newOrder = await base44.asServiceRole.entities.Order.create(orderData);
-                transformedOrders.push(newOrder);
-            }
+            transformedOrders.push(orderData);
+        }
+        
+        // Bulk create all new orders at once
+        if (transformedOrders.length > 0) {
+            await base44.asServiceRole.entities.Order.bulkCreate(transformedOrders);
         }
 
         return Response.json({
