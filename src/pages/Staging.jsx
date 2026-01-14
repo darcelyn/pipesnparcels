@@ -209,6 +209,10 @@ export default function Staging() {
           </div>
         )}
       </div>
+
+      {selectedOrders.length > 0 && (
+        <PrintOrderList orders={orders.filter(o => selectedOrders.includes(o.id))} />
+      )}
     </div>
   );
 }

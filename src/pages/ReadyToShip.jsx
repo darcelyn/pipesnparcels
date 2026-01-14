@@ -194,6 +194,10 @@ export default function ReadyToShip() {
           </div>
         )}
       </div>
+
+      {selectedOrders.length > 0 && (
+        <PrintOrderList orders={orders.filter(o => selectedOrders.includes(o.id))} />
+      )}
     </div>
   );
 }
