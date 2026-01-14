@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Search, X, Filter } from "lucide-react";
 
-export default function OrderFilters({ filters, onFilterChange, onReset }) {
+export default function OrderFilters({ filters, onFilterChange, onReset, hideStatusFilter = false }) {
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
@@ -29,21 +29,23 @@ export default function OrderFilters({ filters, onFilterChange, onReset }) {
           />
         </div>
 
-        <Select 
-          value={filters.status} 
-          onValueChange={(value) => onFilterChange('status', value)}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="hold">On Hold</SelectItem>
-            <SelectItem value="shipped">Shipped</SelectItem>
-          </SelectContent>
-        </Select>
+        {!hideStatusFilter && (
+          <Select 
+            value={filters.status} 
+            onValueChange={(value) => onFilterChange('status', value)}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="hold">On Hold</SelectItem>
+              <SelectItem value="shipped">Shipped</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
 
         <Select 
           value={filters.priority} 

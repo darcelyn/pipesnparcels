@@ -33,7 +33,8 @@ export default function OrderCard({
   selected, 
   onSelect, 
   onCreateLabel,
-  showCheckbox = true 
+  showCheckbox = true,
+  showStagedBy = false
 }) {
   const queryClient = useQueryClient();
   const [showItems, setShowItems] = useState(false);
@@ -163,38 +164,47 @@ export default function OrderCard({
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2">
-                {order.special_instructions && (
-                  <div className="text-amber-600" title={order.special_instructions}>
-                    <AlertCircle className="w-5 h-5" />
+              <div className="flex flex-col gap-2">
+                {showStagedBy && order.staged_by && (
+                  <div className="text-xs text-slate-500 text-right">
+                    Staged by: <span className="font-medium">{order.staged_by}</span>
                   </div>
                 )}
-                <Button 
-                  variant="outline"
-                  size="icon"
-                  onClick={handlePrintPackingList}
-                  className="border-slate-300"
-                  title="Print packing list"
-                >
-                  <Printer className="w-4 h-4" />
-                </Button>
-                <Button 
-                  variant="outline"
-                  size="icon"
-                  onClick={handleDelete}
-                  disabled={deleteOrderMutation.isPending}
-                  className="border-red-300 text-red-600 hover:bg-red-50"
-                  title="Delete order"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-                <Button 
-                  onClick={() => onCreateLabel(order)}
-                  className="bg-teal-600 hover:bg-teal-700 text-white"
-                >
-                  Create Label
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
+                <div className="flex items-center justify-end gap-2">
+                  {order.special_instructions && (
+                    <div className="text-amber-600" title={order.special_instructions}>
+                      <AlertCircle className="w-5 h-5" />
+                    </div>
+                  )}
+                  <Button 
+                    variant="outline"
+                    size="icon"
+                    onClick={handlePrintPackingList}
+                    className="border-slate-300"
+                    title="Print packing list"
+                  >
+                    <Printer className="w-4 h-4" />
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    size="icon"
+                    onClick={handleDelete}
+                    disabled={deleteOrderMutation.isPending}
+                    className="border-red-300 text-red-600 hover:bg-red-50"
+                    title="Delete order"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                  {onCreateLabel && (
+                    <Button 
+                      onClick={() => onCreateLabel(order)}
+                      className="bg-teal-600 hover:bg-teal-700 text-white"
+                    >
+                      Create Label
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
