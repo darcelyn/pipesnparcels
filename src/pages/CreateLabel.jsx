@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import BoxSelector from "@/components/shipping/BoxSelector";
 import RateComparison from "@/components/shipping/RateComparison";
 import AddressDisplay from "@/components/shipping/AddressDisplay";
@@ -57,6 +59,8 @@ export default function CreateLabel() {
   const [labelCreated, setLabelCreated] = useState(false);
   const [createdShipment, setCreatedShipment] = useState(null);
   const [showPackingList, setShowPackingList] = useState(false);
+  const [shipmentCategory, setShipmentCategory] = useState(orderId ? 'order' : 'other');
+  const [categoryNotes, setCategoryNotes] = useState('');
 
   const { data: order, isLoading: orderLoading } = useQuery({
     queryKey: ['order', orderId],
@@ -159,16 +163,18 @@ export default function CreateLabel() {
       const fedexServiceType = serviceTypeMap[selectedRate.serviceName] || 'FEDEX_GROUND';
 
       const response = await base44.functions.invoke('createFedExLabel', {
-        order_id: order.id,
+        order_id: order?.id,
         service_type: fedexServiceType,
         weight: parseFloat(weight),
         dimensions,
         box_type: selectedBox?.name || 'Custom',
-        ship_to_address: {
+        ship_to_address: order ? {
           name: order.customer_name,
           ...order.shipping_address
-        },
-        ship_from_address: settings.return_address
+        } : null,
+        ship_from_address: settings.return_address,
+        shipment_category: shipmentCategory,
+        category_notes: categoryNotes
       });
 
       if (response.data.error) {
@@ -366,6 +372,44 @@ export default function CreateLabel() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Shipment Category */}
+            <Card className="border-slate-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Package className="w-5 h-5 text-teal-600" />
+                  Shipment Type
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Category</Label>
+                  <Select value={shipmentCategory} onValueChange={setShipmentCategory}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="order">Order Fulfillment</SelectItem>
+                      <SelectItem value="custom_part">Custom Part</SelectItem>
+                      <SelectItem value="sample">Sample</SelectItem>
+                      <SelectItem value="return">Return</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {shipmentCategory !== 'order' && (
+                  <div>
+                    <Label>Notes</Label>
+                    <Textarea
+                      value={categoryNotes}
+                      onChange={(e) => setCategoryNotes(e.target.value)}
+                      placeholder="Describe the shipment purpose..."
+                      rows={2}
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Weight Input */}
             <Card className="border-slate-200">
