@@ -8,6 +8,7 @@ import Settings from './pages/Settings';
 import Shipments from './pages/Shipments';
 import Production from './pages/Production';
 import Staging from './pages/Staging';
+import ReadyToShip from './pages/ReadyToShip';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +23,7 @@ export const PAGES = {
     "Shipments": Shipments,
     "Production": Production,
     "Staging": Staging,
+    "ReadyToShip": ReadyToShip,
 }
 
 export const pagesConfig = {

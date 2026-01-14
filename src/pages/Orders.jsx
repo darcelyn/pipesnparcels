@@ -61,8 +61,8 @@ export default function Orders() {
 
   const filteredOrders = useMemo(() => {
     let filtered = orders.filter(order => {
-      // Only show orders that haven't moved to production yet
-      if (order.status === 'production' || order.status === 'staging') {
+      // Only show pending orders that haven't been moved to production workflow
+      if (order.status !== 'pending') {
         return false;
       }
 
