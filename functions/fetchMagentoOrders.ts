@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
         }
 
         // Fetch orders from Magento API
-        const response = await fetch(`${store_url}/rest/V1/orders?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=processing&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`, {
+        const response = await fetch(`${store_url}/rest/V1/orders?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=pending&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`, {
             headers: {
                 'Authorization': `Bearer ${api_key}`,
                 'Content-Type': 'application/json'
