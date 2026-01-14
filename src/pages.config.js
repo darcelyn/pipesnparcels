@@ -6,6 +6,8 @@ import ProposalTemplate from './pages/ProposalTemplate';
 import SalesPage from './pages/SalesPage';
 import Settings from './pages/Settings';
 import Shipments from './pages/Shipments';
+import Production from './pages/Production';
+import Staging from './pages/Staging';
 import __Layout from './Layout.jsx';
 
 
@@ -18,6 +20,8 @@ export const PAGES = {
     "SalesPage": SalesPage,
     "Settings": Settings,
     "Shipments": Shipments,
+    "Production": Production,
+    "Staging": Staging,
 }
 
 export const pagesConfig = {

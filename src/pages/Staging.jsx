@@ -1,71 +1,46 @@
 import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import OrderCard from "@/components/orders/OrderCard";
 import OrderFilters from "@/components/orders/OrderFilters";
 import { 
-  Plus, 
   RefreshCw, 
-  Package, 
-  Tags,
+  PackageCheck,
   Loader2
 } from "lucide-react";
 
-export default function Orders() {
+export default function Staging() {
   const queryClient = useQueryClient();
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [filters, setFilters] = useState({
     search: '',
-    status: 'all',
     priority: 'all',
     source: 'all'
   });
 
-  const syncMagentoMutation = useMutation({
-    mutationFn: () => base44.functions.invoke('fetchMagentoOrders'),
-    onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      alert(`✓ Synced ${response.data.imported_count} new orders from Magento`);
-    },
-    onError: (error) => {
-      alert(`Failed to sync: ${error.message}`);
-    }
+  const { data: orders = [], isLoading, refetch, isFetching } = useQuery({
+    queryKey: ['staging-orders'],
+    queryFn: () => base44.entities.Order.filter({ status: 'staging' })
   });
 
   const bulkUpdateStatusMutation = useMutation({
     mutationFn: async ({ orderIds, status }) => {
-      const user = await base44.auth.me();
       const updates = orderIds.map(id => 
-        base44.entities.Order.update(id, { 
-          status,
-          ...(status === 'staging' ? { staged_by: user.email } : {})
-        })
+        base44.entities.Order.update(id, { status })
       );
       return Promise.all(updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['staging-orders'] });
       setSelectedOrders([]);
     }
   });
 
-  const { data: orders = [], isLoading, refetch, isFetching } = useQuery({
-    queryKey: ['orders'],
-    queryFn: () => base44.entities.Order.list('-created_date', 100)
-  });
-
   const filteredOrders = useMemo(() => {
     let filtered = orders.filter(order => {
-      // Only show orders that haven't moved to production yet
-      if (order.status === 'production' || order.status === 'staging') {
-        return false;
-      }
-
       // Search filter
       if (filters.search) {
         const search = filters.search.toLowerCase();
@@ -74,11 +49,6 @@ export default function Orders() {
           order.customer_name?.toLowerCase().includes(search) ||
           order.customer_email?.toLowerCase().includes(search);
         if (!matchesSearch) return false;
-      }
-      
-      // Status filter
-      if (filters.status !== 'all' && order.status !== filters.status) {
-        return false;
       }
       
       // Priority filter
@@ -99,14 +69,12 @@ export default function Orders() {
     filtered.sort((a, b) => {
       const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
       if (priorityDiff !== 0) return priorityDiff;
-      // Then by created date (newest first)
-      return new Date(b.created_date) - new Date(a.created_date);
+      // Then by updated date (most recently staged first)
+      return new Date(b.updated_date) - new Date(a.updated_date);
     });
     
     return filtered;
   }, [orders, filters]);
-
-  const pendingOrders = filteredOrders.filter(o => o.status === 'pending' || o.status === 'processing');
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -115,7 +83,6 @@ export default function Orders() {
   const handleResetFilters = () => {
     setFilters({
       search: '',
-      status: 'all',
       priority: 'all',
       source: 'all'
     });
@@ -130,25 +97,17 @@ export default function Orders() {
   };
 
   const handleSelectAll = () => {
-    if (selectedOrders.length === pendingOrders.length) {
+    if (selectedOrders.length === filteredOrders.length) {
       setSelectedOrders([]);
     } else {
-      setSelectedOrders(pendingOrders.map(o => o.id));
+      setSelectedOrders(filteredOrders.map(o => o.id));
     }
-  };
-
-  const handleCreateLabel = (order) => {
-    window.location.href = createPageUrl('CreateLabel') + `?orderId=${order.id}`;
-  };
-
-  const handleBatchCreateLabels = () => {
-    const orderIds = selectedOrders.join(',');
-    window.location.href = createPageUrl('CreateLabel') + `?orderIds=${orderIds}`;
   };
 
   const handleBulkStatusChange = (status) => {
     if (selectedOrders.length === 0) return;
-    if (confirm(`Move ${selectedOrders.length} order(s) to ${status}?`)) {
+    const statusLabel = status === 'processing' ? 'ready to ship' : status;
+    if (confirm(`Move ${selectedOrders.length} order(s) to ${statusLabel}?`)) {
       bulkUpdateStatusMutation.mutate({ orderIds: selectedOrders, status });
     }
   };
@@ -159,21 +118,17 @@ export default function Orders() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Orders</h1>
+            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <PackageCheck className="w-6 h-6 text-purple-700" />
+              </div>
+              Staging Area
+            </h1>
             <p className="text-slate-500 mt-1">
-              {pendingOrders.length} pending shipment{pendingOrders.length !== 1 ? 's' : ''}
+              {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''} ready for shipping
             </p>
           </div>
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => syncMagentoMutation.mutate()}
-              disabled={syncMagentoMutation.isPending}
-              className="border-teal-300 text-teal-700 hover:bg-teal-50"
-            >
-              <Package className={`w-4 h-4 mr-2 ${syncMagentoMutation.isPending ? 'animate-spin' : ''}`} />
-              Sync Magento
-            </Button>
             <Button 
               variant="outline" 
               onClick={() => refetch()}
@@ -183,32 +138,17 @@ export default function Orders() {
               <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Link to={createPageUrl('ManualOrder')}>
-              <Button variant="outline" className="border-slate-300">
-                <Plus className="w-4 h-4 mr-2" />
-                Manual Order
-              </Button>
-            </Link>
             {selectedOrders.length > 0 && (
-              <>
-                <Select onValueChange={handleBulkStatusChange}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Change Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="production">Move to Production</SelectItem>
-                    <SelectItem value="hold">Put on Hold</SelectItem>
-                    <SelectItem value="cancelled">Cancel Orders</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button 
-                  onClick={handleBatchCreateLabels}
-                  className="bg-teal-600 hover:bg-teal-700"
-                >
-                  <Tags className="w-4 h-4 mr-2" />
-                  Create {selectedOrders.length} Label{selectedOrders.length !== 1 ? 's' : ''}
-                </Button>
-              </>
+              <Select onValueChange={handleBulkStatusChange}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Change Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="processing">Ready to Ship</SelectItem>
+                  <SelectItem value="production">Back to Production</SelectItem>
+                  <SelectItem value="hold">Put on Hold</SelectItem>
+                </SelectContent>
+              </Select>
             )}
           </div>
         </div>
@@ -219,14 +159,15 @@ export default function Orders() {
             filters={filters}
             onFilterChange={handleFilterChange}
             onReset={handleResetFilters}
+            hideStatusFilter
           />
         </div>
 
         {/* Select All */}
-        {pendingOrders.length > 0 && (
+        {filteredOrders.length > 0 && (
           <div className="flex items-center gap-3 mb-4 px-1">
             <Checkbox 
-              checked={selectedOrders.length === pendingOrders.length && pendingOrders.length > 0}
+              checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
               onCheckedChange={handleSelectAll}
             />
             <span className="text-sm text-slate-600">
@@ -241,23 +182,17 @@ export default function Orders() {
         {/* Orders List */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="text-center py-20">
-            <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No orders found</h3>
-            <p className="text-slate-500 mb-6">
-              {filters.search || filters.status !== 'all' || filters.priority !== 'all' 
+            <PackageCheck className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 mb-2">No orders in staging</h3>
+            <p className="text-slate-500">
+              {filters.search || filters.priority !== 'all' 
                 ? 'Try adjusting your filters'
-                : 'Orders from Magento will appear here'}
+                : 'Orders staged for shipping will appear here'}
             </p>
-            <Link to={createPageUrl('ManualOrder')}>
-              <Button className="bg-teal-600 hover:bg-teal-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Manual Order
-              </Button>
-            </Link>
           </div>
         ) : (
           <div className="space-y-3">
@@ -267,8 +202,8 @@ export default function Orders() {
                 order={order}
                 selected={selectedOrders.includes(order.id)}
                 onSelect={handleSelectOrder}
-                onCreateLabel={handleCreateLabel}
-                showCheckbox={order.status === 'pending' || order.status === 'processing'}
+                showCheckbox
+                showStagedBy
               />
             ))}
           </div>
