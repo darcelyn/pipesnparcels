@@ -26,6 +26,7 @@ export default function Shipments() {
     search: '',
     carrier: 'all',
     status: 'all',
+    category: 'all',
     dateRange: '30'
   });
 
@@ -53,6 +54,11 @@ export default function Shipments() {
       
       // Status filter
       if (filters.status !== 'all' && shipment.status !== filters.status) {
+        return false;
+      }
+      
+      // Category filter
+      if (filters.category !== 'all' && shipment.shipment_category !== filters.category) {
         return false;
       }
       
@@ -175,6 +181,23 @@ export default function Shipments() {
                   <SelectItem value="in_transit">In Transit</SelectItem>
                   <SelectItem value="delivered">Delivered</SelectItem>
                   <SelectItem value="exception">Exception</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select 
+                value={filters.category} 
+                onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
+              >
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="order">Orders</SelectItem>
+                  <SelectItem value="custom_part">Custom Parts</SelectItem>
+                  <SelectItem value="sample">Samples</SelectItem>
+                  <SelectItem value="return">Returns</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
 

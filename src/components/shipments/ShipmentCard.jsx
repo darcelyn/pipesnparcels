@@ -72,9 +72,14 @@ export default function ShipmentCard({
             <div className="flex items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold text-slate-900">
-                  #{shipment.order_number}
+                  #{shipment.order_number || 'N/A'}
                 </span>
                 <StatusBadge status={shipment.status} size="sm" />
+                {shipment.shipment_category && shipment.shipment_category !== 'order' && (
+                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full capitalize">
+                    {shipment.shipment_category.replace('_', ' ')}
+                  </span>
+                )}
               </div>
               <span className="text-sm text-slate-500">
                 {format(new Date(shipment.created_date), 'MMM d, yyyy')}
@@ -95,6 +100,9 @@ export default function ShipmentCard({
               <div>
                 <p className="text-sm text-slate-600">{shipment.service_type}</p>
                 <p className="text-xs text-slate-500 mt-1 font-mono">{shipment.tracking_number}</p>
+                {shipment.category_notes && (
+                  <p className="text-xs text-slate-500 mt-1 italic">{shipment.category_notes}</p>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-2">
