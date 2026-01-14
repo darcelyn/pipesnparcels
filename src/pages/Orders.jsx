@@ -160,7 +160,8 @@ export default function Orders() {
         const matchesSearch = 
           order.order_number?.toLowerCase().includes(search) ||
           order.customer_name?.toLowerCase().includes(search) ||
-          order.customer_email?.toLowerCase().includes(search);
+          order.customer_email?.toLowerCase().includes(search) ||
+          (order.items && order.items.some(item => item.sku?.toLowerCase().includes(search)));
         if (!matchesSearch) return false;
       }
       
