@@ -107,6 +107,7 @@ export default function Orders() {
   }, [orders, filters]);
 
   const pendingOrders = filteredOrders.filter(o => o.status === 'pending' || o.status === 'processing');
+  const readyToShipCount = filteredOrders.filter(o => o.status === 'processing').length;
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -162,6 +163,11 @@ export default function Orders() {
             <h1 className="text-2xl font-bold text-slate-900">Orders</h1>
             <p className="text-slate-500 mt-1">
               {pendingOrders.length} pending shipment{pendingOrders.length !== 1 ? 's' : ''}
+              {readyToShipCount > 0 && (
+                <span className="ml-2 text-teal-600 font-medium">
+                  • {readyToShipCount} ready to ship
+                </span>
+              )}
             </p>
           </div>
           <div className="flex gap-3">
