@@ -49,10 +49,14 @@ export default function CreateLabel() {
   const urlParams = new URLSearchParams(window.location.search);
   const orderId = urlParams.get('orderId');
   
-  const [weight, setWeight] = useState('');
-  const [selectedBox, setSelectedBox] = useState(null);
-  const [customDimensions, setCustomDimensions] = useState({ length: '', width: '', height: '' });
-  const [selectedRate, setSelectedRate] = useState(null);
+  const [weightLbs, setWeightLbs] = useState('');
+  const [weightOz, setWeightOz] = useState('');
+  const [shipFrom, setShipFrom] = useState('default');
+  const [dimensions, setDimensions] = useState({ length: '', width: '', height: '' });
+  const [packageType, setPackageType] = useState('package');
+  const [selectedService, setSelectedService] = useState('');
+  const [confirmationType, setConfirmationType] = useState('none');
+  const [insurance, setInsurance] = useState('none');
   const [rates, setRates] = useState([]);
   const [isLoadingRates, setIsLoadingRates] = useState(false);
   const [isCreatingLabel, setIsCreatingLabel] = useState(false);
@@ -101,38 +105,39 @@ export default function CreateLabel() {
 
   useEffect(() => {
     if (order?.total_weight) {
-      setWeight(order.total_weight.toString());
+      const lbs = Math.floor(order.total_weight);
+      const oz = Math.round((order.total_weight - lbs) * 16);
+      setWeightLbs(lbs.toString());
+      setWeightOz(oz.toString());
     }
   }, [order]);
 
+  const getTotalWeight = () => {
+    const lbs = parseFloat(weightLbs) || 0;
+    const oz = parseFloat(weightOz) || 0;
+    return lbs + (oz / 16);
+  };
+
   const handleGetRates = async () => {
-    if (!weight || (!selectedBox && !customDimensions.length)) return;
+    const totalWeight = getTotalWeight();
+    if (!totalWeight || !dimensions.length || !dimensions.width || !dimensions.height) return;
     
     setIsLoadingRates(true);
     
-    // For now, still show mock rates for comparison
-    // Real rate shopping would require additional FedEx API calls
-    const mockRates = generateMockRates(
-      parseFloat(weight),
-      order?.shipping_address
-    );
+    const mockRates = generateMockRates(totalWeight, order?.shipping_address);
     setRates(mockRates);
     setIsLoadingRates(false);
   };
 
   useEffect(() => {
-    if (weight && (selectedBox || (customDimensions.length && customDimensions.width && customDimensions.height))) {
+    const totalWeight = getTotalWeight();
+    if (totalWeight && dimensions.length && dimensions.width && dimensions.height) {
       handleGetRates();
     }
-  }, [weight, selectedBox, customDimensions]);
-
-  const handleCustomDimensionsChange = (field, value) => {
-    setCustomDimensions(prev => ({ ...prev, [field]: value }));
-    setSelectedBox(null);
-  };
+  }, [weightLbs, weightOz, dimensions]);
 
   const handleCreateLabel = async () => {
-    if (!selectedRate || !order || !settings?.return_address) return;
+    if (!selectedService || !settings?.return_address) return;
     
     if (!settings.return_address) {
       alert('Please configure return address in Settings first');
@@ -142,15 +147,15 @@ export default function CreateLabel() {
     setIsCreatingLabel(true);
     
     try {
-      const dimensions = selectedBox 
-        ? { length: selectedBox.length, width: selectedBox.width, height: selectedBox.height }
-        : { 
-            length: parseFloat(customDimensions.length),
-            width: parseFloat(customDimensions.width),
-            height: parseFloat(customDimensions.height)
-          };
+      const selectedRate = rates.find(r => r.id === selectedService);
+      if (!selectedRate) throw new Error('Selected service not found');
 
-      // Map service name to FedEx service type codes
+      const shipmentDimensions = {
+        length: parseFloat(dimensions.length),
+        width: parseFloat(dimensions.width),
+        height: parseFloat(dimensions.height)
+      };
+
       const serviceTypeMap = {
         'FedEx Ground': 'FEDEX_GROUND',
         'FedEx Home Delivery': 'GROUND_HOME_DELIVERY',
@@ -165,16 +170,18 @@ export default function CreateLabel() {
       const response = await base44.functions.invoke('createFedExLabel', {
         order_id: order?.id,
         service_type: fedexServiceType,
-        weight: parseFloat(weight),
-        dimensions,
-        box_type: selectedBox?.name || 'Custom',
+        weight: getTotalWeight(),
+        dimensions: shipmentDimensions,
+        box_type: packageType,
         ship_to_address: order ? {
           name: order.customer_name,
           ...order.shipping_address
         } : null,
         ship_from_address: settings.return_address,
         shipment_category: shipmentCategory,
-        category_notes: categoryNotes
+        category_notes: categoryNotes,
+        confirmation_type: confirmationType,
+        insurance: insurance
       });
 
       if (response.data.error) {
@@ -373,17 +380,15 @@ export default function CreateLabel() {
               </Card>
             )}
 
-            {/* Shipment Category */}
+            {/* Configure Shipment */}
             <Card className="border-slate-200">
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Package className="w-5 h-5 text-teal-600" />
-                  Shipment Type
-                </CardTitle>
+                <CardTitle className="text-lg">Configure Shipment</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Shipment Category */}
                 <div>
-                  <Label>Category</Label>
+                  <Label>Shipment Type</Label>
                   <Select value={shipmentCategory} onValueChange={setShipmentCategory}>
                     <SelectTrigger>
                       <SelectValue />
@@ -397,6 +402,7 @@ export default function CreateLabel() {
                     </SelectContent>
                   </Select>
                 </div>
+
                 {shipmentCategory !== 'order' && (
                   <div>
                     <Label>Notes</Label>
@@ -408,61 +414,189 @@ export default function CreateLabel() {
                     />
                   </div>
                 )}
-              </CardContent>
-            </Card>
 
-            {/* Weight Input */}
-            <Card className="border-slate-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Scale className="w-5 h-5 text-teal-600" />
-                  Package Weight
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      value={weight}
-                      onChange={(e) => setWeight(e.target.value)}
-                      placeholder="Enter weight"
-                      className="text-lg"
-                    />
+                <Separator />
+
+                {/* Ship From */}
+                <div>
+                  <Label>Ship From</Label>
+                  <Select value={shipFrom} onValueChange={setShipFrom}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">
+                        {settings?.return_address?.company_name || 'Default Address'}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Weight */}
+                <div>
+                  <Label>Weight</Label>
+                  <div className="flex gap-2 items-center">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={weightLbs}
+                        onChange={(e) => setWeightLbs(e.target.value)}
+                        placeholder="0"
+                        className="w-20"
+                      />
+                      <span className="text-sm text-slate-500">lbs</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="15"
+                        value={weightOz}
+                        onChange={(e) => setWeightOz(e.target.value)}
+                        placeholder="0"
+                        className="w-20"
+                      />
+                      <span className="text-sm text-slate-500">oz</span>
+                    </div>
+                    <Button variant="outline" size="icon" className="ml-auto">
+                      <Scale className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <span className="text-slate-500 font-medium">lbs</span>
+                </div>
+
+                {/* Service */}
+                <div>
+                  <Label>Service</Label>
+                  <Select value={selectedService} onValueChange={setSelectedService}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select service..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {rates.length === 0 ? (
+                        <SelectItem value="none" disabled>
+                          Enter weight and dimensions to see rates
+                        </SelectItem>
+                      ) : (
+                        rates.map((rate) => (
+                          <SelectItem key={rate.id} value={rate.id}>
+                            {rate.serviceName} - ${rate.price.toFixed(2)} ({rate.transitDays} days)
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Package */}
+                <div>
+                  <Label>Package</Label>
+                  <Select value={packageType} onValueChange={setPackageType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="package">Package</SelectItem>
+                      <SelectItem value="envelope">Envelope</SelectItem>
+                      <SelectItem value="pak">Pak</SelectItem>
+                      <SelectItem value="tube">Tube</SelectItem>
+                      {boxes.map(box => (
+                        <SelectItem key={box.id} value={box.name}>
+                          {box.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Size */}
+                <div>
+                  <Label>Size (in)</Label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={dimensions.length}
+                        onChange={(e) => setDimensions(prev => ({ ...prev, length: e.target.value }))}
+                        placeholder="L"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={dimensions.width}
+                        onChange={(e) => setDimensions(prev => ({ ...prev, width: e.target.value }))}
+                        placeholder="W"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        value={dimensions.height}
+                        onChange={(e) => setDimensions(prev => ({ ...prev, height: e.target.value }))}
+                        placeholder="H"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Confirmation */}
+                <div>
+                  <Label>Confirmation</Label>
+                  <Select value={confirmationType} onValueChange={setConfirmationType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="signature">Signature</SelectItem>
+                      <SelectItem value="adult_signature">Adult Signature</SelectItem>
+                      <SelectItem value="direct_signature">Direct Signature</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Insurance */}
+                <div>
+                  <Label>Insurance</Label>
+                  <Select value={insurance} onValueChange={setInsurance}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="100">$100</SelectItem>
+                      <SelectItem value="200">$200</SelectItem>
+                      <SelectItem value="500">$500</SelectItem>
+                      <SelectItem value="1000">$1,000</SelectItem>
+                      <SelectItem value="custom">Custom Amount</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {insurance !== 'none' && (
+                    <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                      <span>ℹ️</span> Protect high value orders with insurance
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
-
-            {/* Box Selection */}
-            <BoxSelector
-              boxes={boxes}
-              selectedBox={selectedBox}
-              onSelectBox={setSelectedBox}
-              customDimensions={customDimensions}
-              onCustomDimensionsChange={handleCustomDimensionsChange}
-            />
           </div>
 
-          {/* Right Column - Rates & Action */}
+          {/* Right Column - Action */}
           <div className="space-y-6">
-            <RateComparison
-              rates={rates}
-              selectedRate={selectedRate}
-              onSelectRate={setSelectedRate}
-              isLoading={isLoadingRates}
-            />
-
-            {selectedRate && (
+            {selectedService && rates.find(r => r.id === selectedService) && (
               <Card className="border-teal-200 bg-teal-50">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-slate-700">Shipping Cost</span>
                     <span className="text-2xl font-bold text-slate-900">
-                      ${selectedRate.price.toFixed(2)}
+                      ${rates.find(r => r.id === selectedService)?.price.toFixed(2)}
                     </span>
                   </div>
                   <Button 
