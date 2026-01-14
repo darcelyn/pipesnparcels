@@ -37,10 +37,31 @@ Deno.serve(async (req) => {
 
         const data = await response.json();
         
+        if (!data.items || data.items.length === 0) {
+            return Response.json({
+                success: true,
+                imported_count: 0,
+                total_magento_orders: 0,
+                orders: []
+            });
+        }
+        
+        // Get all order numbers from Magento orders
+        const magentoOrderNumbers = data.items.map(o => o.increment_id);
+        
+        // Check which orders already exist in our system (single query)
+        const existingOrders = await base44.asServiceRole.entities.Order.list();
+        const existingOrderNumbers = new Set(existingOrders.map(o => o.order_number));
+        
         // Transform Magento orders to our Order entity format
         const transformedOrders = [];
         
-        for (const magentoOrder of data.items || []) {
+        for (const magentoOrder of data.items) {
+            // Skip if already exists
+            if (existingOrderNumbers.has(magentoOrder.increment_id)) {
+                continue;
+            }
+            
             const shippingAddress = magentoOrder.extension_attributes?.shipping_assignments?.[0]?.shipping?.address || {};
             
             // Calculate total weight from items
@@ -57,12 +78,19 @@ Deno.serve(async (req) => {
                 };
             });
 
-            // Check if order already exists in our system
-            const existingOrders = await base44.asServiceRole.entities.Order.filter({ 
-                order_number: magentoOrder.increment_id 
-            });
-
-            if (existingOrders.length === 0) {
+            // Map Magento priority if available, otherwise default to 'normal'
+            let priority = 'normal';
+            if (magentoOrder.extension_attributes?.priority) {
+                const magentoPriority = magentoOrder.extension_attributes.priority.toLowerCase();
+                if (magentoPriority === 'urgent' || magentoPriority === 'rush' || magentoPriority === 'high') {
+                    priority = 'rush';
+                } else if (magentoPriority === 'priority' || magentoPriority === 'medium') {
+                    priority = 'priority';
+                }
+            }
+            
+            // Create new order in our system
+            const orderData = {
                 // Map Magento priority if available, otherwise default to 'normal'
                 let priority = 'normal';
                 if (magentoOrder.extension_attributes?.priority) {
