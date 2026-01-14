@@ -21,55 +21,57 @@ export default function PrintOrderList({ orders }) {
           <p className="text-sm text-gray-600">Total Orders: {orders.length}</p>
         </div>
 
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-3 py-2 text-left">☐</th>
-              <th className="border border-gray-300 px-3 py-2 text-left">Order #</th>
-              <th className="border border-gray-300 px-3 py-2 text-left">Customer</th>
-              <th className="border border-gray-300 px-3 py-2 text-left">Location</th>
-              <th className="border border-gray-300 px-3 py-2 text-left">Items</th>
-              <th className="border border-gray-300 px-3 py-2 text-left">Weight</th>
-              <th className="border border-gray-300 px-3 py-2 text-left">Priority</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order) => (
-              <tr key={order.id}>
-                <td className="border border-gray-300 px-3 py-2">☐</td>
-                <td className="border border-gray-300 px-3 py-2 font-medium">
-                  {order.order_number}
-                </td>
-                <td className="border border-gray-300 px-3 py-2">
-                  {order.customer_name}
-                </td>
-                <td className="border border-gray-300 px-3 py-2">
-                  {order.shipping_address?.city}, {order.shipping_address?.state}
-                </td>
-                <td className="border border-gray-300 px-3 py-2">
-                  {order.items?.length || 0}
-                </td>
-                <td className="border border-gray-300 px-3 py-2">
-                  {order.total_weight ? `${order.total_weight} lbs` : '-'}
-                </td>
-                <td className="border border-gray-300 px-3 py-2 uppercase text-xs">
-                  {order.priority}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {orders.some(o => o.special_instructions) && (
-          <div className="mt-6">
-            <h2 className="font-bold mb-2">Special Instructions:</h2>
-            {orders.filter(o => o.special_instructions).map((order) => (
-              <div key={order.id} className="mb-2">
-                <strong>#{order.order_number}:</strong> {order.special_instructions}
+        {orders.map((order) => (
+          <div key={order.id} className="mb-8 break-inside-avoid">
+            <div className="bg-gray-100 px-4 py-2 font-bold border border-gray-300 flex justify-between items-center">
+              <span>Order #{order.order_number} - {order.customer_name}</span>
+              <span className="text-sm font-normal">
+                {order.shipping_address?.city}, {order.shipping_address?.state} • {order.priority?.toUpperCase()}
+              </span>
+            </div>
+            <table className="w-full border-collapse border border-gray-300">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border border-gray-300 px-3 py-2 text-left w-12">☐</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">SKU</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">Part Name</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">Qty</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">Options</th>
+                  <th className="border border-gray-300 px-3 py-2 text-left">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {order.items?.map((item, idx) => (
+                  <tr key={idx}>
+                    <td className="border border-gray-300 px-3 py-2">☐</td>
+                    <td className="border border-gray-300 px-3 py-2 font-medium">
+                      {item.sku || '-'}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2">
+                      {item.name || '-'}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-center">
+                      {item.quantity}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      {item.options || '-'}
+                    </td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">
+                      {item.notes || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {order.special_instructions && (
+              <div className="border border-gray-300 border-t-0 px-4 py-2 bg-yellow-50 text-sm">
+                <strong>Special Instructions:</strong> {order.special_instructions}
               </div>
-            ))}
+            )}
           </div>
-        )}
+        ))}
+
+
       </div>
     </div>
   );
