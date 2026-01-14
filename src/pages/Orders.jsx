@@ -56,17 +56,17 @@ export default function Orders() {
               customer_email: { type: "string" },
               street1: { type: "string" },
               street2: { type: "string" },
+              street3: { type: "string" },
               city: { type: "string" },
               state: { type: "string" },
-              zip: { type: "string" },
               country: { type: "string" },
               phone: { type: "string" },
               sku: { type: "string" },
               item_name: { type: "string" },
               quantity: { type: "number" },
               weight: { type: "number" },
-              special_instructions: { type: "string" },
-              priority: { type: "string" }
+              priority: { type: "string" },
+              special_instructions: { type: "string" }
             }
           }
         }
@@ -86,10 +86,10 @@ export default function Orders() {
             customer_email: row.customer_email,
             shipping_address: {
               street1: row.street1,
-              street2: row.street2,
+              street2: [row.street2, row.street3].filter(Boolean).join(' '),
               city: row.city,
               state: row.state,
-              zip: row.zip,
+              zip: '',
               country: row.country || 'US',
               phone: row.phone
             },
@@ -388,7 +388,7 @@ export default function Orders() {
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <h2 className="text-xl font-bold mb-4">Import Orders from CSV</h2>
             <p className="text-sm text-slate-600 mb-4">
-              Upload a CSV file with columns: order_number, customer_name, customer_email, street1, city, state, zip, country, phone, sku, item_name, quantity, weight, priority, special_instructions
+              Upload a CSV file with columns: order_number, customer_name, customer_email, street1, street2, street3, city, state, country, phone, sku, item_name, quantity, weight, priority, special_instructions
             </p>
             <input
               type="file"
