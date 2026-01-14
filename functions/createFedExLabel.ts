@@ -16,7 +16,9 @@ Deno.serve(async (req) => {
             weight, 
             dimensions,
             ship_to_address,
-            ship_from_address 
+            ship_from_address,
+            shipment_category = 'order',
+            category_notes = ''
         } = body;
 
         // Get FedEx credentials
@@ -134,16 +136,19 @@ Deno.serve(async (req) => {
             throw new Error('Failed to get tracking number or label URL from FedEx response');
         }
 
-        // Get order details
-        const order = await base44.entities.Order.filter({ id: order_id });
-        if (!order || order.length === 0) {
-            throw new Error('Order not found');
+        // Get order details if order_id exists
+        let order = null;
+        if (order_id) {
+            const orderResult = await base44.entities.Order.filter({ id: order_id });
+            if (orderResult && orderResult.length > 0) {
+                order = orderResult[0];
+            }
         }
 
         // Create shipment record
         const shipment = await base44.asServiceRole.entities.Shipment.create({
             order_id: order_id,
-            order_number: order[0].order_number,
+            order_number: order?.order_number || `MANUAL-${Date.now()}`,
             tracking_number: trackingNumber,
             carrier: 'fedex',
             service_type: service_type,
@@ -154,16 +159,20 @@ Deno.serve(async (req) => {
             weight: weight,
             label_url: labelUrl,
             label_format: 'pdf',
-            customer_name: order[0].customer_name,
+            customer_name: ship_to_address?.name || order?.customer_name || 'N/A',
             destination_address: ship_to_address,
-            is_international: ship_to_address.country !== 'US',
+            is_international: ship_to_address?.country !== 'US',
+            shipment_category: shipment_category,
+            category_notes: category_notes,
             shipped_by: user.email
         });
 
-        // Update order status
-        await base44.asServiceRole.entities.Order.update(order_id, {
-            status: 'processing'
-        });
+        // Update order status if order exists
+        if (order) {
+            await base44.asServiceRole.entities.Order.update(order_id, {
+                status: 'processing'
+            });
+        }
 
         return Response.json({
             success: true,
