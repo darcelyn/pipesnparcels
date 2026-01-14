@@ -6,10 +6,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import OrderCard from "@/components/orders/OrderCard";
 import OrderFilters from "@/components/orders/OrderFilters";
+import PrintOrderList from "@/components/orders/PrintOrderList";
 import { 
   RefreshCw, 
   Factory,
-  Loader2
+  Loader2,
+  Printer
 } from "lucide-react";
 
 export default function Production() {
@@ -143,16 +145,26 @@ export default function Production() {
               Refresh
             </Button>
             {selectedOrders.length > 0 && (
-              <Select onValueChange={handleBulkStatusChange}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Change Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="staging">Move to Staging</SelectItem>
-                  <SelectItem value="pending">Back to Pending</SelectItem>
-                  <SelectItem value="hold">Put on Hold</SelectItem>
-                </SelectContent>
-              </Select>
+              <>
+                <Select onValueChange={handleBulkStatusChange}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Change Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="staging">Move to Staging</SelectItem>
+                    <SelectItem value="pending">Back to Pending</SelectItem>
+                    <SelectItem value="hold">Put on Hold</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={() => window.print()}
+                  variant="outline"
+                  className="border-slate-300"
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print List
+                </Button>
+              </>
             )}
           </div>
         </div>

@@ -8,12 +8,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import OrderCard from "@/components/orders/OrderCard";
 import OrderFilters from "@/components/orders/OrderFilters";
+import PrintOrderList from "@/components/orders/PrintOrderList";
 import { 
   Plus, 
   RefreshCw, 
   Package, 
   Tags,
-  Loader2
+  Loader2,
+  Printer
 } from "lucide-react";
 
 export default function Orders() {
@@ -207,6 +209,14 @@ export default function Orders() {
                 >
                   <Tags className="w-4 h-4 mr-2" />
                   Create {selectedOrders.length} Label{selectedOrders.length !== 1 ? 's' : ''}
+                </Button>
+                <Button
+                  onClick={() => window.print()}
+                  variant="outline"
+                  className="border-slate-300"
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print List
                 </Button>
               </>
             )}
