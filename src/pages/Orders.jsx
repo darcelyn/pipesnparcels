@@ -15,12 +15,14 @@ import {
   Package, 
   Tags,
   Loader2,
-  Printer
+  Printer,
+  Upload
 } from "lucide-react";
 
 export default function Orders() {
   const queryClient = useQueryClient();
   const [selectedOrders, setSelectedOrders] = useState([]);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     status: 'all',
@@ -36,6 +38,90 @@ export default function Orders() {
     },
     onError: (error) => {
       alert(`Failed to sync: ${error.message}`);
+    }
+  });
+
+  const importCsvMutation = useMutation({
+    mutationFn: async (file) => {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url,
+        json_schema: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              order_number: { type: "string" },
+              customer_name: { type: "string" },
+              customer_email: { type: "string" },
+              street1: { type: "string" },
+              street2: { type: "string" },
+              city: { type: "string" },
+              state: { type: "string" },
+              zip: { type: "string" },
+              country: { type: "string" },
+              phone: { type: "string" },
+              sku: { type: "string" },
+              item_name: { type: "string" },
+              quantity: { type: "number" },
+              weight: { type: "number" },
+              special_instructions: { type: "string" },
+              priority: { type: "string" }
+            }
+          }
+        }
+      });
+      
+      if (result.status === 'error') {
+        throw new Error(result.details);
+      }
+
+      const ordersByNumber = {};
+      result.output.forEach(row => {
+        if (!ordersByNumber[row.order_number]) {
+          ordersByNumber[row.order_number] = {
+            order_number: row.order_number,
+            source: 'manual',
+            customer_name: row.customer_name,
+            customer_email: row.customer_email,
+            shipping_address: {
+              street1: row.street1,
+              street2: row.street2,
+              city: row.city,
+              state: row.state,
+              zip: row.zip,
+              country: row.country || 'US',
+              phone: row.phone
+            },
+            items: [],
+            priority: row.priority || 'normal',
+            special_instructions: row.special_instructions
+          };
+        }
+        
+        ordersByNumber[row.order_number].items.push({
+          sku: row.sku,
+          name: row.item_name,
+          quantity: row.quantity,
+          weight: row.weight
+        });
+      });
+
+      const orders = Object.values(ordersByNumber);
+      orders.forEach(order => {
+        order.total_weight = order.items.reduce((sum, item) => sum + (item.weight * item.quantity || 0), 0);
+      });
+
+      await base44.entities.Order.bulkCreate(orders);
+      return orders.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      setShowImportDialog(false);
+      alert(`✓ Imported ${count} orders from CSV`);
+    },
+    onError: (error) => {
+      alert(`Failed to import: ${error.message}`);
     }
   });
 
@@ -191,6 +277,14 @@ export default function Orders() {
                 Manual Order
               </Button>
             </Link>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowImportDialog(true)}
+              className="border-slate-300"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Import CSV
+            </Button>
             {selectedOrders.length > 0 && (
               <>
                 <Select onValueChange={handleBulkStatusChange}>
@@ -287,6 +381,42 @@ export default function Orders() {
 
       {selectedOrders.length > 0 && (
         <PrintOrderList orders={orders.filter(o => selectedOrders.includes(o.id))} />
+      )}
+
+      {showImportDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold mb-4">Import Orders from CSV</h2>
+            <p className="text-sm text-slate-600 mb-4">
+              Upload a CSV file with columns: order_number, customer_name, customer_email, street1, city, state, zip, country, phone, sku, item_name, quantity, weight, priority, special_instructions
+            </p>
+            <input
+              type="file"
+              accept=".csv"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) importCsvMutation.mutate(file);
+              }}
+              disabled={importCsvMutation.isPending}
+              className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowImportDialog(false)}
+                disabled={importCsvMutation.isPending}
+              >
+                Cancel
+              </Button>
+            </div>
+            {importCsvMutation.isPending && (
+              <div className="flex items-center justify-center mt-4">
+                <Loader2 className="w-5 h-5 animate-spin text-teal-600 mr-2" />
+                <span className="text-sm text-slate-600">Processing CSV...</span>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
