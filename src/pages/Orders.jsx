@@ -106,8 +106,7 @@ export default function Orders() {
     return filtered;
   }, [orders, filters]);
 
-  const pendingOrders = filteredOrders.filter(o => o.status === 'pending' || o.status === 'processing');
-  const readyToShipCount = filteredOrders.filter(o => o.status === 'processing').length;
+  const pendingOrders = filteredOrders;
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -162,12 +161,7 @@ export default function Orders() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Orders</h1>
             <p className="text-slate-500 mt-1">
-              {pendingOrders.length} pending shipment{pendingOrders.length !== 1 ? 's' : ''}
-              {readyToShipCount > 0 && (
-                <span className="ml-2 text-teal-600 font-medium">
-                  • {readyToShipCount} ready to ship
-                </span>
-              )}
+              {pendingOrders.length} new order{pendingOrders.length !== 1 ? 's' : ''} awaiting processing
             </p>
           </div>
           <div className="flex gap-3">
@@ -274,7 +268,7 @@ export default function Orders() {
                 selected={selectedOrders.includes(order.id)}
                 onSelect={handleSelectOrder}
                 onCreateLabel={handleCreateLabel}
-                showCheckbox={order.status === 'pending' || order.status === 'processing'}
+                showCheckbox={order.status === 'pending'}
               />
             ))}
           </div>
