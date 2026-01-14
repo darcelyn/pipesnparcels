@@ -73,6 +73,14 @@ export default function CreateLabel() {
     queryFn: () => base44.entities.BoxPreset.filter({ is_active: true })
   });
 
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const result = await base44.entities.ShippingSettings.list();
+      return result[0] || null;
+    }
+  });
+
   const createShipmentMutation = useMutation({
     mutationFn: (data) => base44.entities.Shipment.create(data),
     onSuccess: () => {
@@ -97,9 +105,9 @@ export default function CreateLabel() {
     if (!weight || (!selectedBox && !customDimensions.length)) return;
     
     setIsLoadingRates(true);
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
     
+    // For now, still show mock rates for comparison
+    // Real rate shopping would require additional FedEx API calls
     const mockRates = generateMockRates(
       parseFloat(weight),
       order?.shipping_address
@@ -120,49 +128,68 @@ export default function CreateLabel() {
   };
 
   const handleCreateLabel = async () => {
-    if (!selectedRate || !order) return;
+    if (!selectedRate || !order || !settings?.return_address) return;
     
+    if (!settings.return_address) {
+      alert('Please configure return address in Settings first');
+      return;
+    }
+
     setIsCreatingLabel(true);
     
-    // Simulate label creation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const dimensions = selectedBox 
-      ? { length: selectedBox.length, width: selectedBox.width, height: selectedBox.height }
-      : customDimensions;
+    try {
+      const dimensions = selectedBox 
+        ? { length: selectedBox.length, width: selectedBox.width, height: selectedBox.height }
+        : { 
+            length: parseFloat(customDimensions.length),
+            width: parseFloat(customDimensions.width),
+            height: parseFloat(customDimensions.height)
+          };
 
-    const trackingNumber = `${selectedRate.carrier.toUpperCase()}${Date.now()}`;
-    
-    const shipmentData = {
-      order_id: order.id,
-      order_number: order.order_number,
-      tracking_number: trackingNumber,
-      carrier: selectedRate.carrier,
-      service_type: selectedRate.serviceName,
-      status: 'label_created',
-      ship_date: format(new Date(), 'yyyy-MM-dd'),
-      estimated_delivery: format(new Date(Date.now() + selectedRate.transitDays * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-      box_type: selectedBox?.name || 'Custom',
-      dimensions,
-      weight: parseFloat(weight),
-      shipping_cost: selectedRate.price,
-      label_url: `https://example.com/labels/${trackingNumber}.pdf`,
-      customer_name: order.customer_name,
-      destination_address: order.shipping_address,
-      is_international: order.is_international
-    };
+      // Map service name to FedEx service type codes
+      const serviceTypeMap = {
+        'FedEx Ground': 'FEDEX_GROUND',
+        'FedEx Home Delivery': 'GROUND_HOME_DELIVERY',
+        'FedEx Express Saver': 'FEDEX_EXPRESS_SAVER',
+        'FedEx 2Day': 'FEDEX_2_DAY',
+        'FedEx Priority Overnight': 'PRIORITY_OVERNIGHT',
+        'FedEx Standard Overnight': 'STANDARD_OVERNIGHT'
+      };
 
-    const shipment = await createShipmentMutation.mutateAsync(shipmentData);
-    
-    // Update order status
-    await updateOrderMutation.mutateAsync({
-      id: order.id,
-      data: { status: 'shipped' }
-    });
+      const fedexServiceType = serviceTypeMap[selectedRate.serviceName] || 'FEDEX_GROUND';
 
-    setCreatedShipment({ ...shipmentData, id: shipment.id });
-    setLabelCreated(true);
-    setIsCreatingLabel(false);
+      const response = await base44.functions.invoke('createFedExLabel', {
+        order_id: order.id,
+        service_type: fedexServiceType,
+        weight: parseFloat(weight),
+        dimensions,
+        box_type: selectedBox?.name || 'Custom',
+        ship_to_address: {
+          name: order.customer_name,
+          ...order.shipping_address
+        },
+        ship_from_address: settings.return_address
+      });
+
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
+
+      setCreatedShipment({
+        tracking_number: response.data.tracking_number,
+        label_url: response.data.label_url,
+        carrier: 'fedex',
+        service_type: selectedRate.serviceName,
+        shipping_cost: selectedRate.price,
+        estimated_delivery: format(new Date(Date.now() + selectedRate.transitDays * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
+      });
+      
+      setLabelCreated(true);
+    } catch (error) {
+      alert(`Failed to create label: ${error.message}`);
+    } finally {
+      setIsCreatingLabel(false);
+    }
   };
 
   const handlePrintPackingList = () => {
