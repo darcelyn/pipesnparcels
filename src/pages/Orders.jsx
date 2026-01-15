@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import OrderCard from "@/components/orders/OrderCard";
 import OrderFilters from "@/components/orders/OrderFilters";
 import PrintOrderList from "@/components/orders/PrintOrderList";
+import PrioritySuggestion from "@/components/orders/PrioritySuggestion";
 import { 
   Plus, 
   RefreshCw, 
@@ -23,6 +24,7 @@ export default function Orders() {
   const queryClient = useQueryClient();
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [aiAssistOrder, setAiAssistOrder] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
     status: 'all',
@@ -242,6 +244,14 @@ export default function Orders() {
     }
   };
 
+  const handleAiSuggestionAccept = async (suggestedPriority) => {
+    if (aiAssistOrder) {
+      await base44.entities.Order.update(aiAssistOrder.id, { priority: suggestedPriority });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      setAiAssistOrder(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -343,6 +353,17 @@ export default function Orders() {
           </div>
         )}
 
+        {/* AI Priority Assistant */}
+        {aiAssistOrder && (
+          <div className="mb-6">
+            <PrioritySuggestion
+              order={aiAssistOrder}
+              onAccept={handleAiSuggestionAccept}
+              onClose={() => setAiAssistOrder(null)}
+            />
+          </div>
+        )}
+
         {/* Orders List */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -374,6 +395,7 @@ export default function Orders() {
                 onSelect={handleSelectOrder}
                 onCreateLabel={handleCreateLabel}
                 showCheckbox={order.status === 'pending'}
+                onAiAssist={() => setAiAssistOrder(order)}
               />
             ))}
           </div>
