@@ -9,6 +9,7 @@ import SalesPage from './pages/SalesPage';
 import Settings from './pages/Settings';
 import Shipments from './pages/Shipments';
 import Staging from './pages/Staging';
+import Reports from './pages/Reports';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +25,7 @@ export const PAGES = {
     "Settings": Settings,
     "Shipments": Shipments,
     "Staging": Staging,
+    "Reports": Reports,
 }
 
 export const pagesConfig = {

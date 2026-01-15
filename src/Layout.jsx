@@ -38,6 +38,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Staging', page: 'Staging', icon: Package },
     { name: 'Ready to Ship', page: 'ReadyToShip', icon: Truck },
     { name: 'Shipments', page: 'Shipments', icon: Truck },
+    { name: 'Reports', page: 'Reports', icon: LayoutDashboard },
     { name: 'Settings', page: 'Settings', icon: Settings },
   ];
 
