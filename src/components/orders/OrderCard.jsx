@@ -24,7 +24,8 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
-  Printer
+  Printer,
+  Sparkles
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -34,7 +35,8 @@ export default function OrderCard({
   onSelect, 
   onCreateLabel,
   showCheckbox = true,
-  showStagedBy = false
+  showStagedBy = false,
+  onAiAssist
 }) {
   const queryClient = useQueryClient();
   const [showItems, setShowItems] = useState(false);
@@ -175,6 +177,17 @@ export default function OrderCard({
                     <div className="text-amber-600" title={order.special_instructions}>
                       <AlertCircle className="w-5 h-5" />
                     </div>
+                  )}
+                  {onAiAssist && (
+                    <Button 
+                      variant="outline"
+                      size="icon"
+                      onClick={() => onAiAssist(order)}
+                      className="border-purple-300 text-purple-600 hover:bg-purple-50"
+                      title="AI Priority Assistant"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                    </Button>
                   )}
                   <Button 
                     variant="outline"
