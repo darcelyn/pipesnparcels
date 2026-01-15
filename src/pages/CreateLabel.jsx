@@ -111,13 +111,15 @@ export default function CreateLabel() {
       setWeightLbs(lbs.toString());
       setWeightOz(oz.toString());
     }
+  }, [order]);
 
+  useEffect(() => {
     // Auto-populate insurance for orders $500+
     if (order?.order_value && order.order_value >= 500) {
       setInsurance('custom');
-      setCustomInsuranceAmount(order.order_value.toString());
+      setCustomInsuranceAmount(order.order_value.toFixed(2));
     }
-  }, [order]);
+  }, [order?.order_value]);
 
   const getTotalWeight = () => {
     const lbs = parseFloat(weightLbs) || 0;

@@ -105,15 +105,7 @@ Deno.serve(async (req) => {
                         width: dimensions.width,
                         height: dimensions.height,
                         units: "IN"
-                    },
-                    ...(insurance !== 'none' && {
-                        packageSpecialServices: {
-                            specialServiceTypes: ["SIGNATURE_OPTION"],
-                            signatureOptionType: confirmation_type === 'adult_signature' ? 'ADULT' : 
-                                               confirmation_type === 'direct_signature' ? 'DIRECT' : 
-                                               confirmation_type === 'signature' ? 'INDIRECT' : undefined
-                        }
-                    })
+                    }
                 }]
             },
             accountNumber: {
