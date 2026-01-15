@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import ScheduleTimeline from "@/components/production/ScheduleTimeline";
 import WIPTracker from "@/components/production/WIPTracker";
 import ProductionForecast from "@/components/production/ProductionForecast";
@@ -28,6 +30,8 @@ export default function ProductionPlanning() {
   const [activeTab, setActiveTab] = useState('schedule');
   const [showScheduler, setShowScheduler] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
 
   const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = useQuery({
     queryKey: ['production-tasks'],
@@ -45,6 +49,16 @@ export default function ProductionPlanning() {
   });
 
   const isLoading = tasksLoading || stationsLoading;
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (passwordInput === 'planning2026') {
+      setIsUnlocked(true);
+    } else {
+      alert('Incorrect password');
+      setPasswordInput('');
+    }
+  };
 
   // Auto-schedule function
   const autoScheduleMutation = useMutation({
@@ -126,6 +140,35 @@ export default function ProductionPlanning() {
       completedThisWeek: completedThisWeek.length
     };
   }, [tasks]);
+
+  if (!isUnlocked) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Access Required</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div>
+                <Label>Enter Password</Label>
+                <Input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder="Password"
+                  autoFocus
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Unlock
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

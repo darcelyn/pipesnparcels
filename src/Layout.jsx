@@ -35,12 +35,12 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Dashboard', page: 'Dashboard', icon: LayoutDashboard },
     { name: 'Orders', page: 'Orders', icon: Package },
     { name: 'Production', page: 'Production', icon: Package },
-    { name: 'Production Planning', page: 'ProductionPlanning', icon: LayoutDashboard },
     { name: 'Staging', page: 'Staging', icon: Package },
     { name: 'Ready to Ship', page: 'ReadyToShip', icon: Truck },
     { name: 'Shipments', page: 'Shipments', icon: Truck },
     { name: 'Reports', page: 'Reports', icon: LayoutDashboard },
     { name: 'Settings', page: 'Settings', icon: Settings },
+    { name: 'System Tools', page: 'ProductionPlanning', icon: Settings },
   ];
 
   const NavLink = ({ item }) => {
