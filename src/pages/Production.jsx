@@ -238,7 +238,11 @@ export default function Production() {
                       return (
                         <div
                           key={idx}
-                          onClick={() => handleSelectItem(order.order_number, order.customer_name, item)}
+                          onClick={(e) => {
+                            if (e.target.tagName !== 'BUTTON') {
+                              handleSelectItem(order.order_number, order.customer_name, item);
+                            }
+                          }}
                           className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
                             selected 
                               ? 'border-amber-500 bg-amber-50' 
@@ -247,8 +251,9 @@ export default function Production() {
                         >
                           <Checkbox 
                             checked={selected}
-                            onCheckedChange={() => handleSelectItem(order.order_number, order.customer_name, item)}
+                            onCheckedChange={(checked) => handleSelectItem(order.order_number, order.customer_name, item)}
                             className="mt-1"
+                            onClick={(e) => e.stopPropagation()}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-3">
