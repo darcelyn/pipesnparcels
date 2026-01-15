@@ -46,7 +46,9 @@ Deno.serve(async (req) => {
         });
 
         if (!authResponse.ok) {
-            throw new Error(`FedEx auth failed: ${authResponse.status}`);
+            const errorText = await authResponse.text();
+            console.error('FedEx auth error:', errorText);
+            throw new Error(`FedEx auth failed: ${authResponse.status} - ${errorText}`);
         }
 
         const authData = await authResponse.json();
@@ -125,6 +127,8 @@ Deno.serve(async (req) => {
 
         if (!shipResponse.ok) {
             const errorData = await shipResponse.text();
+            console.error('FedEx shipping error:', errorData);
+            console.error('Request sent:', JSON.stringify(labelRequest, null, 2));
             throw new Error(`FedEx shipping failed: ${shipResponse.status} - ${errorData}`);
         }
 

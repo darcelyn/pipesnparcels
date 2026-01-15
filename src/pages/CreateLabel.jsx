@@ -194,7 +194,9 @@ export default function CreateLabel() {
       });
 
       if (response.data.error) {
-        throw new Error(response.data.error);
+        console.error('Full error response:', response.data);
+        alert(`Error: ${response.data.error}\n${response.data.details || ''}`);
+        return;
       }
 
       setCreatedShipment({
@@ -208,8 +210,8 @@ export default function CreateLabel() {
       
       setLabelCreated(true);
     } catch (error) {
+      console.error('Label creation error:', error);
       alert(`Failed to create label: ${error.message}`);
-    } finally {
       setIsCreatingLabel(false);
     }
   };
