@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
         // Get FedEx credentials
         const fedexApiKey = Deno.env.get("fedex_api_key");
         const fedexSecretKey = Deno.env.get("fedex_secret_key");
-        const fedexAccountNumber = Deno.env.get("fedex_account_number");
+        const fedexAccountNumber = Deno.env.get("defex_account_number") || Deno.env.get("fedex_account_number");
 
         if (!fedexApiKey || !fedexSecretKey || !fedexAccountNumber) {
             return Response.json({ error: 'FedEx credentials not configured' }, { status: 500 });
