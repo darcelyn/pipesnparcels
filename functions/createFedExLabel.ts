@@ -33,7 +33,8 @@ Deno.serve(async (req) => {
         }
 
         // Step 1: Get OAuth token from FedEx
-        const authResponse = await fetch('https://apis.fedex.com/oauth/token', {
+        console.log('Attempting FedEx authentication...');
+        const authResponse = await fetch('https://apis-sandbox.fedex.com/oauth/token', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -115,7 +116,8 @@ Deno.serve(async (req) => {
             }
         };
 
-        const shipResponse = await fetch('https://apis.fedex.com/ship/v1/shipments', {
+        console.log('Creating shipment with FedEx...');
+        const shipResponse = await fetch('https://apis-sandbox.fedex.com/ship/v1/shipments', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
