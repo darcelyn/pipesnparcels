@@ -133,7 +133,14 @@ export default function Production() {
     return selectedItems.some(i => i.order_number === orderNumber && i.sku === sku);
   };
 
-  const handlePrintList = () => {
+  const handlePrintList = async () => {
+    // Email the production list
+    try {
+      await base44.functions.invoke('emailProductionList', { items: selectedItems });
+    } catch (error) {
+      console.error('Failed to email production list:', error);
+    }
+    
     setShowPrintView(true);
     setTimeout(() => {
       window.print();
