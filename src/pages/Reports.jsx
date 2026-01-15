@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import AIInsights from "@/components/reports/AIInsights";
 import {
   BarChart,
   Bar,
@@ -288,6 +289,11 @@ export default function Reports() {
               Export PDF
             </Button>
           </div>
+        </div>
+
+        {/* AI Insights */}
+        <div className="mb-8">
+          <AIInsights dateRange={dateRange} />
         </div>
 
         {/* KPIs */}
