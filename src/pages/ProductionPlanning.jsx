@@ -9,6 +9,7 @@ import ScheduleTimeline from "@/components/production/ScheduleTimeline";
 import WIPTracker from "@/components/production/WIPTracker";
 import ProductionForecast from "@/components/production/ProductionForecast";
 import TaskScheduler from "@/components/production/TaskScheduler";
+import PlanningGuide from "@/components/production/PlanningGuide";
 import { 
   Calendar, 
   TrendingUp, 
@@ -17,7 +18,8 @@ import {
   Plus,
   Clock,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  HelpCircle
 } from "lucide-react";
 import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
 
@@ -25,6 +27,7 @@ export default function ProductionPlanning() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('schedule');
   const [showScheduler, setShowScheduler] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const { data: tasks = [], isLoading: tasksLoading, refetch: refetchTasks } = useQuery({
     queryKey: ['production-tasks'],
@@ -151,6 +154,14 @@ export default function ProductionPlanning() {
           <div className="flex gap-3">
             <Button 
               variant="outline" 
+              onClick={() => setShowGuide(true)}
+              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+            >
+              <HelpCircle className="w-4 h-4 mr-2" />
+              Guide
+            </Button>
+            <Button 
+              variant="outline" 
               onClick={() => refetchTasks()}
               className="border-slate-300"
             >
@@ -260,6 +271,11 @@ export default function ProductionPlanning() {
           workstations={workstations}
           onClose={() => setShowScheduler(false)}
         />
+      )}
+
+      {/* Planning Guide */}
+      {showGuide && (
+        <PlanningGuide onClose={() => setShowGuide(false)} />
       )}
     </div>
   );
