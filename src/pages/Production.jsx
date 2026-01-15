@@ -4,19 +4,22 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import OrderCard from "@/components/orders/OrderCard";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import OrderFilters from "@/components/orders/OrderFilters";
-import PrintOrderList from "@/components/orders/PrintOrderList";
+import PrintProductionList from "@/components/orders/PrintProductionList";
 import { 
   RefreshCw, 
   Factory,
   Loader2,
-  Printer
+  Printer,
+  Package
 } from "lucide-react";
 
 export default function Production() {
   const queryClient = useQueryClient();
-  const [selectedOrders, setSelectedOrders] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [showPrintView, setShowPrintView] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     priority: 'all',
@@ -26,6 +29,17 @@ export default function Production() {
   const { data: orders = [], isLoading, refetch, isFetching } = useQuery({
     queryKey: ['production-orders'],
     queryFn: () => base44.entities.Order.filter({ status: 'production' })
+  });
+
+  const { data: shorthandMap = {} } = useQuery({
+    queryKey: ['product-shorthand'],
+    queryFn: async () => {
+      const data = await base44.entities.ProductShorthand.list();
+      return data.reduce((acc, item) => {
+        acc[item.sku] = item;
+        return acc;
+      }, {});
+    }
   });
 
   const bulkUpdateStatusMutation = useMutation({
@@ -94,29 +108,42 @@ export default function Production() {
     });
   };
 
-  const handleSelectOrder = (orderId) => {
-    setSelectedOrders(prev => 
-      prev.includes(orderId) 
-        ? prev.filter(id => id !== orderId)
-        : [...prev, orderId]
-    );
+  const handleSelectItem = (orderNumber, customerName, item) => {
+    const itemKey = `${orderNumber}-${item.sku}`;
+    setSelectedItems(prev => {
+      const exists = prev.find(i => `${i.order_number}-${i.sku}` === itemKey);
+      if (exists) {
+        return prev.filter(i => `${i.order_number}-${i.sku}` !== itemKey);
+      } else {
+        const shorthand = shorthandMap[item.sku];
+        return [...prev, {
+          order_number: orderNumber,
+          customer_name: customerName,
+          sku: item.sku,
+          name: item.name,
+          quantity: item.quantity,
+          shorthand: shorthand?.shorthand || '',
+          special_options: shorthand?.special_options || ''
+        }];
+      }
+    });
   };
 
-  const handleSelectAll = () => {
-    if (selectedOrders.length === filteredOrders.length) {
-      setSelectedOrders([]);
-    } else {
-      setSelectedOrders(filteredOrders.map(o => o.id));
-    }
+  const isItemSelected = (orderNumber, sku) => {
+    return selectedItems.some(i => i.order_number === orderNumber && i.sku === sku);
   };
 
-  const handleBulkStatusChange = (status) => {
-    if (selectedOrders.length === 0) return;
-    const statusLabel = status === 'staging' ? 'staging' : 'pending';
-    if (confirm(`Move ${selectedOrders.length} order(s) to ${statusLabel}?`)) {
-      bulkUpdateStatusMutation.mutate({ orderIds: selectedOrders, status });
-    }
+  const handlePrintList = () => {
+    setShowPrintView(true);
+    setTimeout(() => {
+      window.print();
+      setShowPrintView(false);
+    }, 100);
   };
+
+  if (showPrintView) {
+    return <PrintProductionList selectedItems={selectedItems} />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -144,27 +171,14 @@ export default function Production() {
               <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            {selectedOrders.length > 0 && (
-              <>
-                <Select onValueChange={handleBulkStatusChange}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Change Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="staging">Move to Staging</SelectItem>
-                    <SelectItem value="pending">Back to Pending</SelectItem>
-                    <SelectItem value="hold">Put on Hold</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={() => window.print()}
-                  variant="outline"
-                  className="border-slate-300"
-                >
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print List
-                </Button>
-              </>
+            {selectedItems.length > 0 && (
+              <Button
+                onClick={handlePrintList}
+                className="bg-amber-600 hover:bg-amber-700"
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                Print Production List ({selectedItems.length})
+              </Button>
             )}
           </div>
         </div>
@@ -178,22 +192,6 @@ export default function Production() {
             hideStatusFilter
           />
         </div>
-
-        {/* Select All */}
-        {filteredOrders.length > 0 && (
-          <div className="flex items-center gap-3 mb-4 px-1">
-            <Checkbox 
-              checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
-              onCheckedChange={handleSelectAll}
-            />
-            <span className="text-sm text-slate-600">
-              {selectedOrders.length > 0 
-                ? `${selectedOrders.length} selected`
-                : 'Select all'
-              }
-            </span>
-          </div>
-        )}
 
         {/* Orders List */}
         {isLoading ? (
@@ -211,23 +209,77 @@ export default function Production() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {filteredOrders.map(order => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                selected={selectedOrders.includes(order.id)}
-                onSelect={handleSelectOrder}
-                showCheckbox
-              />
+              <Card key={order.id} className="border-slate-200">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className="text-lg font-semibold text-slate-900">
+                          Order #{order.order_number}
+                        </h3>
+                        {order.priority === 'rush' && (
+                          <Badge className="bg-red-100 text-red-800">RUSH</Badge>
+                        )}
+                        {order.priority === 'priority' && (
+                          <Badge className="bg-orange-100 text-orange-800">Priority</Badge>
+                        )}
+                      </div>
+                      <p className="text-slate-600">{order.customer_name}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {order.items?.map((item, idx) => {
+                      const shorthand = shorthandMap[item.sku];
+                      const selected = isItemSelected(order.order_number, item.sku);
+                      
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => handleSelectItem(order.order_number, order.customer_name, item)}
+                          className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                            selected 
+                              ? 'border-amber-500 bg-amber-50' 
+                              : 'border-slate-200 hover:border-slate-300 bg-white'
+                          }`}
+                        >
+                          <Checkbox 
+                            checked={selected}
+                            onCheckedChange={() => handleSelectItem(order.order_number, order.customer_name, item)}
+                            className="mt-1"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1">
+                                <p className="font-medium text-slate-900 mb-1">
+                                  {shorthand?.shorthand || item.name}
+                                </p>
+                                {shorthand?.special_options && (
+                                  <p className="text-sm text-amber-700 font-medium mb-1">
+                                    {shorthand.special_options}
+                                  </p>
+                                )}
+                                <p className="text-xs text-slate-500 font-mono">{item.sku}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-medium text-slate-600">Qty</p>
+                                <p className="text-2xl font-bold text-slate-900">{item.quantity}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
       </div>
 
-      {selectedOrders.length > 0 && (
-        <PrintOrderList orders={orders.filter(o => selectedOrders.includes(o.id))} />
-      )}
     </div>
   );
 }
