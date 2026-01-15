@@ -259,11 +259,11 @@ export default function Production() {
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex-1">
                                 <p className="font-medium text-slate-900 mb-1">
-                                  {shorthand?.shorthand || item.name}
+                                  {item.name}
                                 </p>
-                                {shorthand?.special_options && (
-                                  <p className="text-sm text-amber-700 font-medium mb-1">
-                                    {shorthand.special_options}
+                                {item.options && (
+                                  <p className="text-sm text-slate-600 mb-1">
+                                    {item.options}
                                   </p>
                                 )}
                                 <p className="text-xs text-slate-500 font-mono">{item.sku}</p>
