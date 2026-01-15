@@ -55,6 +55,7 @@ export default function CreateLabel() {
   const [selectedService, setSelectedService] = useState('');
   const [confirmationType, setConfirmationType] = useState('none');
   const [insurance, setInsurance] = useState('none');
+  const [customInsuranceAmount, setCustomInsuranceAmount] = useState('');
   const [rates, setRates] = useState([]);
   const [isLoadingRates, setIsLoadingRates] = useState(false);
   const [isCreatingLabel, setIsCreatingLabel] = useState(false);
@@ -109,6 +110,12 @@ export default function CreateLabel() {
       const oz = Math.round(totalOz % 16);
       setWeightLbs(lbs.toString());
       setWeightOz(oz.toString());
+    }
+
+    // Auto-populate insurance for orders $500+
+    if (order?.order_value && order.order_value >= 500) {
+      setInsurance('custom');
+      setCustomInsuranceAmount(order.order_value.toString());
     }
   }, [order]);
 
@@ -578,6 +585,20 @@ export default function CreateLabel() {
                       <SelectItem value="custom">Custom Amount</SelectItem>
                     </SelectContent>
                   </Select>
+                  {insurance === 'custom' && (
+                    <div className="mt-2">
+                      <Label>Insurance Amount</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={customInsuranceAmount}
+                        onChange={(e) => setCustomInsuranceAmount(e.target.value)}
+                        placeholder="Enter amount"
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
                   {insurance !== 'none' && (
                     <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
                       <span>ℹ️</span> Protect high value orders with insurance
