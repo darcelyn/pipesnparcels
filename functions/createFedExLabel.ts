@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
                 recipients: [{
                     contact: {
                         personName: ship_to_address.name,
-                        phoneNumber: ship_to_address.phone
+                        phoneNumber: ship_to_address.phone || ship_from_address.phone || "0000000000"
                     },
                     address: {
                         streetLines: [ship_to_address.street1, ship_to_address.street2].filter(Boolean),
