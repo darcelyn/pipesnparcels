@@ -188,7 +188,7 @@ export default function CreateLabel() {
         shipment_category: shipmentCategory,
         category_notes: categoryNotes,
         confirmation_type: confirmationType,
-        insurance: insurance
+        insurance: insurance === 'custom' ? customInsuranceAmount : insurance
       });
 
       if (response.data.error) {
