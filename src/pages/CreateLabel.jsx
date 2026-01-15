@@ -9,8 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import BoxSelector from "@/components/shipping/BoxSelector";
-import RateComparison from "@/components/shipping/RateComparison";
 import AddressDisplay from "@/components/shipping/AddressDisplay";
 import PackingList from "@/components/orders/PackingList";
 import { 
@@ -105,8 +103,10 @@ export default function CreateLabel() {
 
   useEffect(() => {
     if (order?.total_weight) {
-      const lbs = Math.floor(order.total_weight);
-      const oz = Math.round((order.total_weight - lbs) * 16);
+      // Magento exports weight in oz
+      const totalOz = order.total_weight;
+      const lbs = Math.floor(totalOz / 16);
+      const oz = Math.round(totalOz % 16);
       setWeightLbs(lbs.toString());
       setWeightOz(oz.toString());
     }
@@ -359,7 +359,7 @@ export default function CreateLabel() {
                             </div>
                             <div className="flex gap-4 text-xs text-slate-500">
                               {item.sku && <span>SKU: {item.sku}</span>}
-                              {item.weight && <span>Weight: {item.weight} lbs each</span>}
+                              {item.weight && <span>Weight: {item.weight} oz each</span>}
                             </div>
                           </div>
                         )) || (
