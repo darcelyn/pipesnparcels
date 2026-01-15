@@ -18,7 +18,9 @@ Deno.serve(async (req) => {
             ship_to_address,
             ship_from_address,
             shipment_category = 'order',
-            category_notes = ''
+            category_notes = '',
+            confirmation_type = 'none',
+            insurance = 'none'
         } = body;
 
         // Get FedEx credentials
@@ -103,7 +105,15 @@ Deno.serve(async (req) => {
                         width: dimensions.width,
                         height: dimensions.height,
                         units: "IN"
-                    }
+                    },
+                    ...(insurance !== 'none' && {
+                        packageSpecialServices: {
+                            specialServiceTypes: ["SIGNATURE_OPTION"],
+                            signatureOptionType: confirmation_type === 'adult_signature' ? 'ADULT' : 
+                                               confirmation_type === 'direct_signature' ? 'DIRECT' : 
+                                               confirmation_type === 'signature' ? 'INDIRECT' : undefined
+                        }
+                    })
                 }]
             },
             accountNumber: {
