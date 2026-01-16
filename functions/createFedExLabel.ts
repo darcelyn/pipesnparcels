@@ -61,28 +61,31 @@ Deno.serve(async (req) => {
             requestedShipment: {
                 shipper: {
                     contact: {
-                        personName: ship_from_address.company_name,
-                        phoneNumber: ship_from_address.phone
+                        personName: ship_from_address.company_name || "Shipper",
+                        phoneNumber: ship_from_address.phone?.replace(/\D/g, '') || "0000000000",
+                        companyName: ship_from_address.company_name || "Shipper"
                     },
                     address: {
                         streetLines: [ship_from_address.street1, ship_from_address.street2].filter(Boolean),
                         city: ship_from_address.city,
                         stateOrProvinceCode: ship_from_address.state,
-                        postalCode: ship_from_address.zip,
-                        countryCode: ship_from_address.country
+                        postalCode: ship_from_address.zip?.replace(/\D/g, ''),
+                        countryCode: ship_from_address.country || "US",
+                        residential: false
                     }
                 },
                 recipients: [{
                     contact: {
-                        personName: ship_to_address.name,
-                        phoneNumber: ship_to_address.phone || ship_from_address.phone || "0000000000"
+                        personName: ship_to_address.name || "Recipient",
+                        phoneNumber: (ship_to_address.phone || ship_from_address.phone || "0000000000").replace(/\D/g, ''),
+                        companyName: ship_to_address.company || ""
                     },
                     address: {
                         streetLines: [ship_to_address.street1, ship_to_address.street2].filter(Boolean),
                         city: ship_to_address.city,
                         stateOrProvinceCode: ship_to_address.state,
-                        postalCode: ship_to_address.zip,
-                        countryCode: ship_to_address.country,
+                        postalCode: ship_to_address.zip?.replace(/\D/g, ''),
+                        countryCode: ship_to_address.country || "US",
                         residential: true
                     }
                 }],
