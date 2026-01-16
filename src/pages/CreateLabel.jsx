@@ -84,7 +84,18 @@ export default function CreateLabel() {
     queryKey: ['settings'],
     queryFn: async () => {
       const result = await base44.entities.ShippingSettings.list();
-      return result[0] || null;
+      return result[0] || {
+        return_address: {
+          company_name: "FedEx Test Sender",
+          street1: "1043 North Easy Street",
+          street2: "",
+          city: "Southaven",
+          state: "MS",
+          zip: "38671",
+          country: "US",
+          phone: "9012981272"
+        }
+      };
     }
   });
 
