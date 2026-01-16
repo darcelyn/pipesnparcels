@@ -505,29 +505,6 @@ export default function CreateLabel() {
                   </div>
                 </div>
 
-                {/* Service */}
-                <div>
-                  <Label>Service</Label>
-                  <Select value={selectedService} onValueChange={setSelectedService}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select service..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {rates.length === 0 ? (
-                        <SelectItem value="none" disabled>
-                          Enter weight and dimensions to see rates
-                        </SelectItem>
-                      ) : (
-                        rates.map((rate) => (
-                          <SelectItem key={rate.id} value={rate.id}>
-                            {rate.serviceName} - ${rate.price.toFixed(2)} ({rate.transitDays} days)
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Package */}
                 <div>
                   <Label>Package</Label>
@@ -637,6 +614,31 @@ export default function CreateLabel() {
                       <span>ℹ️</span> Protect high value orders with insurance
                     </p>
                   )}
+                </div>
+
+                <Separator />
+
+                {/* Service - Moved to bottom */}
+                <div>
+                  <Label>Select Service</Label>
+                  <Select value={selectedService} onValueChange={setSelectedService}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select shipping service..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {rates.length === 0 ? (
+                        <SelectItem value="none" disabled>
+                          Enter weight and dimensions to see rates
+                        </SelectItem>
+                      ) : (
+                        rates.map((rate) => (
+                          <SelectItem key={rate.id} value={rate.id}>
+                            {rate.serviceName} - ${rate.price.toFixed(2)} ({rate.transitDays} days)
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardContent>
             </Card>
