@@ -197,7 +197,15 @@ export default function CreateLabel() {
         ship_to_address: order ? {
           name: order.customer_name,
           ...order.shipping_address
-        } : null,
+        } : {
+          name: "Test Recipient",
+          street1: "1600 Pennsylvania Ave",
+          city: "Washington",
+          state: "DC",
+          zip: "20500",
+          country: "US",
+          phone: "2025551234"
+        },
         ship_from_address: settings.return_address,
         shipment_category: shipmentCategory,
         category_notes: categoryNotes,
