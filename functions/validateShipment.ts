@@ -88,6 +88,10 @@ Deno.serve(async (req) => {
                 shippingChargesPayment: {
                     paymentType: "SENDER"
                 },
+                labelSpecification: {
+                    imageType: "PDF",
+                    labelStockType: "PAPER_4X6"
+                },
                 requestedPackageLineItems: [{
                     weight: {
                         units: "LB",
