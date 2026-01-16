@@ -185,7 +185,7 @@ export default function CreateLabel() {
         'FedEx Standard Overnight': 'STANDARD_OVERNIGHT'
       };
 
-      const fedexServiceType = serviceTypeMap[selectedRate.serviceName] || 'FEDEX_GROUND';
+      const fedexServiceType = serviceTypeMap[selectedRate.serviceName] || 'FEDEX_EXPRESS_SAVER';
 
       // Create label directly - validation is optional
       const response = await base44.functions.invoke('createFedExLabel', {
