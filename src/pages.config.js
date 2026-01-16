@@ -3,14 +3,14 @@ import Dashboard from './pages/Dashboard';
 import ManualOrder from './pages/ManualOrder';
 import Orders from './pages/Orders';
 import Production from './pages/Production';
+import ProductionPlanning from './pages/ProductionPlanning';
 import ProposalTemplate from './pages/ProposalTemplate';
 import ReadyToShip from './pages/ReadyToShip';
+import Reports from './pages/Reports';
 import SalesPage from './pages/SalesPage';
 import Settings from './pages/Settings';
 import Shipments from './pages/Shipments';
 import Staging from './pages/Staging';
-import Reports from './pages/Reports';
-import ProductionPlanning from './pages/ProductionPlanning';
 import __Layout from './Layout.jsx';
 
 
@@ -20,14 +20,14 @@ export const PAGES = {
     "ManualOrder": ManualOrder,
     "Orders": Orders,
     "Production": Production,
+    "ProductionPlanning": ProductionPlanning,
     "ProposalTemplate": ProposalTemplate,
     "ReadyToShip": ReadyToShip,
+    "Reports": Reports,
     "SalesPage": SalesPage,
     "Settings": Settings,
     "Shipments": Shipments,
     "Staging": Staging,
-    "Reports": Reports,
-    "ProductionPlanning": ProductionPlanning,
 }
 
 export const pagesConfig = {

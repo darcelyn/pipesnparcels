@@ -176,6 +176,24 @@ export default function CreateLabel() {
 
       const fedexServiceType = serviceTypeMap[selectedRate.serviceName] || 'FEDEX_GROUND';
 
+      // Step 1: Validate shipment with FedEx
+      const validationResponse = await base44.functions.invoke('validateShipment', {
+        service_type: fedexServiceType,
+        weight: getTotalWeight(),
+        dimensions: shipmentDimensions,
+        ship_to_address: order ? {
+          name: order.customer_name,
+          ...order.shipping_address
+        } : null,
+        ship_from_address: settings.return_address
+      });
+
+      if (!validationResponse.data.validated) {
+        alert(`Validation Failed: ${validationResponse.data.error}\n\nPlease check the shipping details and try again.`);
+        setIsCreatingLabel(false);
+        return;
+      }
+
       const response = await base44.functions.invoke('createFedExLabel', {
         order_id: order?.id,
         service_type: fedexServiceType,
