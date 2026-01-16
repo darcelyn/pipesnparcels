@@ -56,26 +56,38 @@ Deno.serve(async (req) => {
         const validateRequest = {
             requestedShipment: {
                 shipper: {
+                    contact: {
+                        personName: ship_from_address.company_name || "Shipper",
+                        phoneNumber: ship_from_address.phone || "0000000000"
+                    },
                     address: {
                         streetLines: [ship_from_address.street1, ship_from_address.street2].filter(Boolean),
                         city: ship_from_address.city,
                         stateOrProvinceCode: ship_from_address.state,
                         postalCode: ship_from_address.zip,
-                        countryCode: ship_from_address.country
+                        countryCode: ship_from_address.country || "US"
                     }
                 },
                 recipients: [{
+                    contact: {
+                        personName: ship_to_address.name || "Recipient",
+                        phoneNumber: ship_to_address.phone || "0000000000"
+                    },
                     address: {
                         streetLines: [ship_to_address.street1, ship_to_address.street2].filter(Boolean),
                         city: ship_to_address.city,
                         stateOrProvinceCode: ship_to_address.state,
                         postalCode: ship_to_address.zip,
-                        countryCode: ship_to_address.country,
+                        countryCode: ship_to_address.country || "US",
                         residential: true
                     }
                 }],
                 serviceType: service_type,
                 packagingType: "YOUR_PACKAGING",
+                pickupType: "USE_SCHEDULED_PICKUP",
+                shippingChargesPayment: {
+                    paymentType: "SENDER"
+                },
                 requestedPackageLineItems: [{
                     weight: {
                         units: "LB",
