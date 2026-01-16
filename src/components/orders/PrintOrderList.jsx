@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 
-export default function PrintOrderList({ orders }) {
+function PrintOrderList({ orders }) {
   return (
     <div className="print:block hidden">
       <style>{`
@@ -76,3 +76,5 @@ export default function PrintOrderList({ orders }) {
     </div>
   );
 }
+
+export default PrintOrderList;
