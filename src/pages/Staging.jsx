@@ -223,6 +223,7 @@ export default function Staging() {
                 onSelect={handleSelectOrder}
                 showCheckbox
                 showStagedBy
+                showStatusMenu
               />
             ))}
           </div>

@@ -25,7 +25,8 @@ import {
   ChevronDown,
   ChevronUp,
   Printer,
-  Sparkles
+  Sparkles,
+  MoreVertical
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -36,7 +37,8 @@ export default function OrderCard({
   onCreateLabel,
   showCheckbox = true,
   showStagedBy = false,
-  onAiAssist
+  onAiAssist,
+  showStatusMenu = false
 }) {
   const queryClient = useQueryClient();
   const [showItems, setShowItems] = useState(false);
@@ -46,6 +48,21 @@ export default function OrderCard({
     mutationFn: (priority) => base44.entities.Order.update(order.id, { priority }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['staging-orders'] });
+    }
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async (status) => {
+      const user = await base44.auth.me();
+      return base44.entities.Order.update(order.id, { 
+        status,
+        ...(status === 'staging' ? { staged_by: user.email } : {})
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['staging-orders'] });
     }
   });
 
@@ -177,6 +194,30 @@ export default function OrderCard({
                     <div className="text-amber-600" title={order.special_instructions}>
                       <AlertCircle className="w-5 h-5" />
                     </div>
+                  )}
+                  {showStatusMenu && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {order.status === 'staging' && (
+                          <>
+                            <DropdownMenuItem onClick={() => updateStatusMutation.mutate('processing')}>
+                              Move to Shipping
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => updateStatusMutation.mutate('production')}>
+                              Back to Production
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        <DropdownMenuItem onClick={() => updateStatusMutation.mutate('hold')}>
+                          Put on Hold
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                   {onAiAssist && (
                     <Button 
