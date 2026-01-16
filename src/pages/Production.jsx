@@ -6,6 +6,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import OrderFilters from "@/components/orders/OrderFilters";
 import PrintProductionList from "@/components/orders/PrintProductionList";
 import { 
@@ -13,7 +19,8 @@ import {
   Factory,
   Loader2,
   Printer,
-  Package
+  Package,
+  MoreVertical
 } from "lucide-react";
 
 export default function Production() {
@@ -42,20 +49,16 @@ export default function Production() {
     }
   });
 
-  const bulkUpdateStatusMutation = useMutation({
-    mutationFn: async ({ orderIds, status }) => {
+  const updateOrderMutation = useMutation({
+    mutationFn: async ({ orderId, status }) => {
       const user = await base44.auth.me();
-      const updates = orderIds.map(id => 
-        base44.entities.Order.update(id, { 
-          status,
-          ...(status === 'staging' ? { staged_by: user.email } : {})
-        })
-      );
-      return Promise.all(updates);
+      return base44.entities.Order.update(orderId, { 
+        status,
+        ...(status === 'staging' ? { staged_by: user.email } : {})
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });
-      setSelectedOrders([]);
     }
   });
 
@@ -235,6 +238,24 @@ export default function Production() {
                       </div>
                       <p className="text-slate-600">{order.customer_name}</p>
                     </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: 'staging' })}>
+                          Move to Staging
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: 'pending' })}>
+                          Back to Pending
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: 'hold' })}>
+                          Put on Hold
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   <div className="space-y-2">

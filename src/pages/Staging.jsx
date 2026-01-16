@@ -4,6 +4,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import OrderCard from "@/components/orders/OrderCard";
 import OrderFilters from "@/components/orders/OrderFilters";
 import PrintOrderList from "@/components/orders/PrintOrderList";
@@ -11,7 +17,8 @@ import {
   RefreshCw, 
   PackageCheck,
   Loader2,
-  Printer
+  Printer,
+  MoreVertical
 } from "lucide-react";
 
 export default function Staging() {
