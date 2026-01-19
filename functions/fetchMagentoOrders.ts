@@ -54,14 +54,20 @@ Deno.serve(async (req) => {
         });
 
         if (!response.ok) {
-            throw new Error(`Magento API error: ${response.status} ${response.statusText}`);
+            const errorText = await response.text();
+            console.error('Orders API Failed:', errorText);
+            return Response.json({ 
+                error: `Failed to fetch orders: ${response.status}`,
+                details: errorText
+            }, { status: 500 });
         }
 
         const data = await response.json();
         
         // Log all statuses found for debugging
-        const status = data.items?.map(o => o.status) || [];
-        console.log('Found order status:', [...new Set(status)]);
+        const statuses = data.items?.map(o => o.status) || [];
+        const uniqueStatuses = [...new Set(statuses)];
+        console.log('Found order statuses in your store:', uniqueStatuses);
         
         if (!data.items || data.items.length === 0) {
             return Response.json({
@@ -69,7 +75,26 @@ Deno.serve(async (req) => {
                 imported_count: 0,
                 total_magento_orders: 0,
                 orders: [],
-                debug_info: 'No orders found with this status filter'
+                message: 'No orders found in Magento',
+                available_statuses: []
+            });
+        }
+        
+        // Filter orders by the status we want (now checking all recent orders)
+        const targetStatus = 'Order Received - Awaiting Fulfillment.';
+        const filteredOrders = data.items.filter(o => o.status === targetStatus);
+        
+        console.log(`Total orders: ${data.items.length}, Matching status: ${filteredOrders.length}`);
+        
+        if (filteredOrders.length === 0) {
+            return Response.json({
+                success: true,
+                imported_count: 0,
+                total_magento_orders: data.items.length,
+                orders: [],
+                message: `No orders with status "${targetStatus}" found`,
+                available_statuses: uniqueStatuses,
+                hint: 'Use one of the available statuses shown above in your filter'
             });
         }
         
