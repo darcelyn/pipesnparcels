@@ -9,18 +9,22 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // Get Magento credentials from secrets
         const store_url = Deno.env.get("magento_store_url");
         const api_key = Deno.env.get("magento_api_key");
         
+        console.log('Store URL:', store_url ? 'SET' : 'NOT SET');
+        console.log('API Key:', api_key ? 'SET' : 'NOT SET');
+        
         if (!store_url || !api_key) {
             return Response.json({ 
-                error: 'Magento credentials not configured'
+                error: 'Magento credentials not configured. Please set magento_store_url and magento_api_key secrets.',
+                debug: { store_url: !!store_url, api_key: !!api_key }
             }, { status: 500 });
         }
 
-        // Fetch orders from Magento API with properly encoded status
-        const statusFilter = encodeURIComponent('Order Received - Awaiting Fulfillment.');
-        const response = await fetch(`${store_url}/rest/V1/orders?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=${statusFilter}&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`, {
+        // Fetch orders from Magento API
+        const response = await fetch(`${store_url}/rest/V1/orders?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=Order Received - Awaiting Fulfillment.&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`, {
             headers: {
                 'Authorization': `Bearer ${api_key}`,
                 'Content-Type': 'application/json'
@@ -33,18 +37,17 @@ Deno.serve(async (req) => {
 
         const data = await response.json();
         
-        // Debug: Log what we got from Magento
-        console.log('Magento returned:', data.items?.length || 0, 'orders');
-        if (data.items?.length > 0) {
-            console.log('Sample statuses:', data.items.slice(0, 3).map(o => `"${o.status}"`));
-        }
+        // Log all statuses found for debugging
+        const status = data.items?.map(o => o.status) || [];
+        console.log('Found order status:', [...new Set(status)]);
         
         if (!data.items || data.items.length === 0) {
             return Response.json({
                 success: true,
                 imported_count: 0,
                 total_magento_orders: 0,
-                message: 'No orders found with this status in Magento'
+                orders: [],
+                debug_info: 'No orders found with this status filter'
             });
         }
         
@@ -80,7 +83,16 @@ Deno.serve(async (req) => {
                 };
             });
 
-            const priority = 'normal';
+            // Map Magento priority if available, otherwise default to 'normal'
+            let priority = 'normal';
+            if (magentoOrder.extension_attributes?.priority) {
+                const magentoPriority = magentoOrder.extension_attributes.priority.toLowerCase();
+                if (magentoPriority === 'urgent' || magentoPriority === 'rush' || magentoPriority === 'high') {
+                    priority = 'rush';
+                } else if (magentoPriority === 'priority' || magentoPriority === 'medium') {
+                    priority = 'priority';
+                }
+            }
             
             // Create new order in our system
             const orderData = {
@@ -116,7 +128,8 @@ Deno.serve(async (req) => {
         return Response.json({
             success: true,
             imported_count: transformedOrders.length,
-            total_magento_orders: data.items?.length || 0
+            total_magento_orders: data.items?.length || 0,
+            orders: transformedOrders
         });
 
     } catch (error) {
