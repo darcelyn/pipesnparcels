@@ -23,8 +23,30 @@ Deno.serve(async (req) => {
             }, { status: 500 });
         }
 
-        // Fetch orders from Magento API
-        const response = await fetch(`${store_url}/rest/V1/orders?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=Order Received - Awaiting Fulfillment.&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`, {
+        // Test basic API connectivity first
+        console.log('Testing Magento API connectivity...');
+        const testResponse = await fetch(`${store_url}/rest/V1/store/storeViews`, {
+            headers: {
+                'Authorization': `Bearer ${api_key}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('Test API Status:', testResponse.status);
+        
+        if (!testResponse.ok) {
+            const errorText = await testResponse.text();
+            console.error('API Test Failed:', errorText);
+            return Response.json({ 
+                error: `Magento API authentication failed: ${testResponse.status}`,
+                details: errorText,
+                help: 'Check that your Access Token has the correct permissions for Orders in System → Integrations'
+            }, { status: 500 });
+        }
+        
+        // Fetch ALL orders first to see what statuses exist
+        console.log('Fetching all orders to check statuses...');
+        const response = await fetch(`${store_url}/rest/V1/orders?searchCriteria[pageSize]=10`, {
             headers: {
                 'Authorization': `Bearer ${api_key}`,
                 'Content-Type': 'application/json'
