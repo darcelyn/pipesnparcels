@@ -37,12 +37,17 @@ Deno.serve(async (req) => {
 
         const data = await response.json();
         
+        // Log all statuses found for debugging
+        const statuses = data.items?.map(o => o.status) || [];
+        console.log('Found order statuses:', [...new Set(statuses)]);
+        
         if (!data.items || data.items.length === 0) {
             return Response.json({
                 success: true,
                 imported_count: 0,
                 total_magento_orders: 0,
-                orders: []
+                orders: [],
+                debug_info: 'No orders found with this status filter'
             });
         }
         
