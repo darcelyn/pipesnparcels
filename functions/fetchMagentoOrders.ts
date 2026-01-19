@@ -32,11 +32,18 @@ Deno.serve(async (req) => {
 
         const data = await response.json();
         
+        // Debug: Log what we got from Magento
+        console.log('Magento returned:', data.items?.length || 0, 'orders');
+        if (data.items?.length > 0) {
+            console.log('Sample statuses:', data.items.slice(0, 3).map(o => `"${o.status}"`));
+        }
+        
         if (!data.items || data.items.length === 0) {
             return Response.json({
                 success: true,
                 imported_count: 0,
-                total_magento_orders: 0
+                total_magento_orders: 0,
+                message: 'No orders found with this status in Magento'
             });
         }
         
