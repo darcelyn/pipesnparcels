@@ -9,17 +9,12 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Get Magento credentials from secrets
         const store_url = Deno.env.get("magento_store_url");
         const api_key = Deno.env.get("magento_api_key");
         
-        console.log('Store URL:', store_url ? 'SET' : 'NOT SET');
-        console.log('API Key:', api_key ? 'SET' : 'NOT SET');
-        
         if (!store_url || !api_key) {
             return Response.json({ 
-                error: 'Magento credentials not configured. Please set magento_store_url and magento_api_key secrets.',
-                debug: { store_url: !!store_url, api_key: !!api_key }
+                error: 'Magento credentials not configured'
             }, { status: 500 });
         }
 
@@ -37,17 +32,11 @@ Deno.serve(async (req) => {
 
         const data = await response.json();
         
-        // Log all statuses found for debugging
-        const statuses = data.items?.map(o => o.status) || [];
-        console.log('Found order statuses:', [...new Set(statuses)]);
-        
         if (!data.items || data.items.length === 0) {
             return Response.json({
                 success: true,
                 imported_count: 0,
-                total_magento_orders: 0,
-                orders: [],
-                debug_info: 'No orders found with this status filter'
+                total_magento_orders: 0
             });
         }
         
@@ -83,16 +72,7 @@ Deno.serve(async (req) => {
                 };
             });
 
-            // Map Magento priority if available, otherwise default to 'normal'
-            let priority = 'normal';
-            if (magentoOrder.extension_attributes?.priority) {
-                const magentoPriority = magentoOrder.extension_attributes.priority.toLowerCase();
-                if (magentoPriority === 'urgent' || magentoPriority === 'rush' || magentoPriority === 'high') {
-                    priority = 'rush';
-                } else if (magentoPriority === 'priority' || magentoPriority === 'medium') {
-                    priority = 'priority';
-                }
-            }
+            const priority = 'normal';
             
             // Create new order in our system
             const orderData = {
@@ -128,8 +108,7 @@ Deno.serve(async (req) => {
         return Response.json({
             success: true,
             imported_count: transformedOrders.length,
-            total_magento_orders: data.items?.length || 0,
-            orders: transformedOrders
+            total_magento_orders: data.items?.length || 0
         });
 
     } catch (error) {
