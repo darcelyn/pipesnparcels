@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
         // Transform Magento orders to our Order entity format
         const transformedOrders = [];
         
-        for (const magentoOrder of data.items) {
+        for (const magentoOrder of filteredOrders) {
             // Skip if already exists
             if (existingOrderNumbers.has(magentoOrder.increment_id)) {
                 continue;
