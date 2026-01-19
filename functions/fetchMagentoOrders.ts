@@ -18,8 +18,9 @@ Deno.serve(async (req) => {
             }, { status: 500 });
         }
 
-        // Fetch orders from Magento API
-        const response = await fetch(`${store_url}/rest/V1/orders?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=Order Received - Awaiting Fulfillment.&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`, {
+        // Fetch orders from Magento API with properly encoded status
+        const statusFilter = encodeURIComponent('Order Received - Awaiting Fulfillment.');
+        const response = await fetch(`${store_url}/rest/V1/orders?searchCriteria[filter_groups][0][filters][0][field]=status&searchCriteria[filter_groups][0][filters][0][value]=${statusFilter}&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`, {
             headers: {
                 'Authorization': `Bearer ${api_key}`,
                 'Content-Type': 'application/json'
