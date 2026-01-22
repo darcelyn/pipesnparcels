@@ -56,13 +56,13 @@ Deno.serve(async (req) => {
         const settings = await base44.asServiceRole.entities.ShippingSettings.list();
         const lastSyncTime = settings[0]?.last_order_sync;
         
-        // Build search criteria - always filter for pending/processing orders
+        // Build search criteria - filter for orders awaiting fulfillment
         let searchUrl = `${store_url}/rest/V1/orders?searchCriteria[pageSize]=100`;
 
-        // Filter for orders that need fulfillment (pending/processing status)
+        // Filter for orders that need fulfillment
         searchUrl += `&searchCriteria[filter_groups][0][filters][0][field]=status`;
-        searchUrl += `&searchCriteria[filter_groups][0][filters][0][value]=pending,processing`;
-        searchUrl += `&searchCriteria[filter_groups][0][filters][0][condition_type]=in`;
+        searchUrl += `&searchCriteria[filter_groups][0][filters][0][value]=Order Received - Awaiting Fulfillment.`;
+        searchUrl += `&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`;
 
         // Add incremental time filter if enabled and we have a last sync time
         if (isIncrementalSync && lastSyncTime) {
