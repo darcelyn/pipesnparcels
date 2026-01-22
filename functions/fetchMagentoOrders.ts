@@ -59,9 +59,10 @@ Deno.serve(async (req) => {
         // Build search criteria - filter for orders awaiting fulfillment
         let searchUrl = `${store_url}/rest/V1/orders?searchCriteria[pageSize]=100`;
 
-        // Filter for orders that need fulfillment
+        // Filter for orders that need fulfillment (URL encode the status value)
+        const statusValue = encodeURIComponent('Order Received - Awaiting Fulfillment.');
         searchUrl += `&searchCriteria[filter_groups][0][filters][0][field]=status`;
-        searchUrl += `&searchCriteria[filter_groups][0][filters][0][value]=Order Received - Awaiting Fulfillment.`;
+        searchUrl += `&searchCriteria[filter_groups][0][filters][0][value]=${statusValue}`;
         searchUrl += `&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`;
 
         // Add incremental time filter if enabled and we have a last sync time
