@@ -13,8 +13,15 @@ import {
   AlertCircle,
   CheckCircle2,
   DollarSign,
-  Box
+  Box,
+  ChevronDown
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 
 export default function Products() {
@@ -28,18 +35,21 @@ export default function Products() {
   });
 
   const syncProductsMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ incremental = true }) => {
       setSyncStatus('syncing');
-      const response = await base44.functions.invoke('fetchMagentoProducts', {});
+      const response = await base44.functions.invoke('fetchMagentoProducts', { incremental });
       return response.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      setSyncStatus('success');
+      setSyncStatus({
+        type: 'success',
+        message: `${data.sync_type === 'incremental' ? 'Incremental' : 'Full'} sync: ${data.new_count} new, ${data.updated_count} updated`
+      });
       setTimeout(() => setSyncStatus(null), 5000);
     },
     onError: (error) => {
-      setSyncStatus('error');
+      setSyncStatus({ type: 'error', message: error.message });
       setTimeout(() => setSyncStatus(null), 5000);
     }
   });
@@ -61,40 +71,52 @@ export default function Products() {
             <h1 className="text-3xl font-bold text-slate-900">Products</h1>
             <p className="text-slate-500 mt-1">Manage inventory synced from Magento</p>
           </div>
-          <Button
-            onClick={() => syncProductsMutation.mutate()}
-            disabled={syncProductsMutation.isPending}
-            className="bg-teal-600 hover:bg-teal-700"
-          >
-            {syncProductsMutation.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Syncing...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Sync from Magento
-              </>
-            )}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                disabled={syncProductsMutation.isPending}
+                className="bg-teal-600 hover:bg-teal-700"
+              >
+                {syncProductsMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Sync from Magento
+                    <ChevronDown className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => syncProductsMutation.mutate({ incremental: true })}>
+                Quick Sync (Updates Only)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => syncProductsMutation.mutate({ incremental: false })}>
+                Full Sync (All Products)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Sync Status */}
-        {syncStatus === 'success' && (
+        {syncStatus?.type === 'success' && (
           <Card className="mb-6 border-green-200 bg-green-50">
             <CardContent className="p-4 flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-green-600" />
-              <p className="text-green-800 font-medium">Products synced successfully!</p>
+              <p className="text-green-800 font-medium">{syncStatus.message}</p>
             </CardContent>
           </Card>
         )}
 
-        {syncStatus === 'error' && (
+        {syncStatus?.type === 'error' && (
           <Card className="mb-6 border-red-200 bg-red-50">
             <CardContent className="p-4 flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-600" />
-              <p className="text-red-800 font-medium">Failed to sync products. Check your Magento credentials.</p>
+              <p className="text-red-800 font-medium">Failed to sync: {syncStatus.message}</p>
             </CardContent>
           </Card>
         )}

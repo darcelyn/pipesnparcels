@@ -1,13 +1,21 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-    try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
+    const maxRetries = 3;
+    let retryCount = 0;
+    
+    const attemptSync = async () => {
+        try {
+            const base44 = createClientFromRequest(req);
+            const user = await base44.auth.me();
 
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+            if (!user) {
+                return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+            
+            // Parse request body for sync options
+            const body = await req.json().catch(() => ({}));
+            const isIncrementalSync = body.incremental !== false; // default to incremental
 
         // Get Magento credentials from secrets
         const store_url = Deno.env.get("magento_store_url");
@@ -44,59 +52,94 @@ Deno.serve(async (req) => {
             }, { status: 500 });
         }
         
-        // Fetch ALL orders first to see what statuses exist
-        console.log('Fetching all orders to check statuses...');
-        const response = await fetch(`${store_url}/rest/V1/orders?searchCriteria[pageSize]=10`, {
-            headers: {
-                'Authorization': `Bearer ${api_key}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Orders API Failed:', errorText);
-            return Response.json({ 
-                error: `Failed to fetch orders: ${response.status}`,
-                details: errorText
-            }, { status: 500 });
+        // Get last sync time for incremental sync
+        const settings = await base44.asServiceRole.entities.ShippingSettings.list();
+        const lastSyncTime = settings[0]?.last_order_sync;
+        
+        // Build search criteria
+        let searchUrl = `${store_url}/rest/V1/orders?searchCriteria[pageSize]=100`;
+        
+        // Add incremental filter if enabled and we have a last sync time
+        if (isIncrementalSync && lastSyncTime) {
+            console.log('Performing incremental sync since:', lastSyncTime);
+            searchUrl += `&searchCriteria[filter_groups][0][filters][0][field]=updated_at`;
+            searchUrl += `&searchCriteria[filter_groups][0][filters][0][value]=${lastSyncTime}`;
+            searchUrl += `&searchCriteria[filter_groups][0][filters][0][condition_type]=gt`;
+        } else {
+            console.log('Performing full sync (historical orders)');
         }
+        
+        // Fetch orders with pagination
+        let allOrders = [];
+        let currentPage = 1;
+        let hasMorePages = true;
+        
+        while (hasMorePages) {
+            const pageUrl = `${searchUrl}&searchCriteria[currentPage]=${currentPage}`;
+            console.log(`Fetching page ${currentPage}...`);
+            
+            const response = await fetch(pageUrl, {
+                headers: {
+                    'Authorization': `Bearer ${api_key}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
-        const data = await response.json();
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Orders API Failed:', errorText);
+                
+                // Retry logic for transient errors
+                if (retryCount < maxRetries && (response.status >= 500 || response.status === 429)) {
+                    retryCount++;
+                    const waitTime = Math.pow(2, retryCount) * 1000; // exponential backoff
+                    console.log(`Retrying in ${waitTime}ms... (attempt ${retryCount}/${maxRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                    return attemptSync();
+                }
+                
+                return Response.json({ 
+                    error: `Failed to fetch orders: ${response.status}`,
+                    details: errorText,
+                    retries_attempted: retryCount
+                }, { status: 500 });
+            }
+
+            const data = await response.json();
+            
+            if (data.items && data.items.length > 0) {
+                allOrders = allOrders.concat(data.items);
+                console.log(`Page ${currentPage}: ${data.items.length} orders`);
+                
+                if (data.items.length < 100) {
+                    hasMorePages = false;
+                } else {
+                    currentPage++;
+                }
+            } else {
+                hasMorePages = false;
+            }
+        }
         
-        // Log all statuses found for debugging
-        const statuses = data.items?.map(o => o.status) || [];
-        const uniqueStatuses = [...new Set(statuses)];
-        console.log('Found order statuses in your store:', uniqueStatuses);
+        console.log(`Total orders fetched: ${allOrders.length}`);
         
-        if (!data.items || data.items.length === 0) {
+        if (allOrders.length === 0) {
             return Response.json({
                 success: true,
                 imported_count: 0,
                 total_magento_orders: 0,
                 orders: [],
-                message: 'No orders found in Magento',
-                available_statuses: []
+                message: isIncrementalSync && lastSyncTime 
+                    ? 'No new orders since last sync' 
+                    : 'No orders found in Magento'
             });
         }
         
-        // Filter orders by the status we want (now checking all recent orders)
+        // Filter orders by the status we want
         const targetStatus = 'Order Received - Awaiting Fulfillment.';
-        const filteredOrders = data.items.filter(o => o.status === targetStatus);
+        const filteredOrders = allOrders.filter(o => o.status === targetStatus);
         
-        console.log(`Total orders: ${data.items.length}, Matching status: ${filteredOrders.length}`);
-        
-        if (filteredOrders.length === 0) {
-            return Response.json({
-                success: true,
-                imported_count: 0,
-                total_magento_orders: data.items.length,
-                orders: [],
-                message: `No orders with status "${targetStatus}" found`,
-                available_statuses: uniqueStatuses,
-                hint: 'Use one of the available statuses shown above in your filter'
-            });
-        }
+        console.log(`Orders with status "${targetStatus}": ${filteredOrders.length}`);
         
         // Get all order numbers from Magento orders
         const magentoOrderNumbers = data.items.map(o => o.increment_id);
@@ -171,19 +214,42 @@ Deno.serve(async (req) => {
         if (transformedOrders.length > 0) {
             await base44.asServiceRole.entities.Order.bulkCreate(transformedOrders);
         }
+        
+        // Update last sync time
+        if (settings[0]) {
+            await base44.asServiceRole.entities.ShippingSettings.update(settings[0].id, {
+                last_order_sync: new Date().toISOString()
+            });
+        }
 
         return Response.json({
             success: true,
             imported_count: transformedOrders.length,
-            total_magento_orders: data.items?.length || 0,
+            total_magento_orders: allOrders.length,
+            filtered_orders: filteredOrders.length,
+            sync_type: isIncrementalSync && lastSyncTime ? 'incremental' : 'full',
             orders: transformedOrders
         });
 
-    } catch (error) {
-        console.error('Error fetching Magento orders:', error);
-        return Response.json({ 
-            error: error.message,
-            details: 'Failed to fetch orders from Magento'
-        }, { status: 500 });
-    }
+        } catch (error) {
+            console.error('Error fetching Magento orders:', error);
+            
+            // Retry on network errors
+            if (retryCount < maxRetries && (error.name === 'TypeError' || error.message.includes('fetch'))) {
+                retryCount++;
+                const waitTime = Math.pow(2, retryCount) * 1000;
+                console.log(`Network error, retrying in ${waitTime}ms... (attempt ${retryCount}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                return attemptSync();
+            }
+            
+            return Response.json({ 
+                error: error.message,
+                details: 'Failed to fetch orders from Magento',
+                retries_attempted: retryCount
+            }, { status: 500 });
+        }
+    };
+    
+    return attemptSync();
 });

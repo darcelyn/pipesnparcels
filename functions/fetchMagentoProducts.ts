@@ -1,13 +1,21 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 Deno.serve(async (req) => {
-    try {
-        const base44 = createClientFromRequest(req);
-        const user = await base44.auth.me();
+    const maxRetries = 3;
+    let retryCount = 0;
+    
+    const attemptSync = async () => {
+        try {
+            const base44 = createClientFromRequest(req);
+            const user = await base44.auth.me();
 
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+            if (!user) {
+                return Response.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+            
+            // Parse request body for sync options
+            const body = await req.json().catch(() => ({}));
+            const isIncrementalSync = body.incremental !== false; // default to incremental
 
         // Get Magento credentials from secrets
         const store_url = Deno.env.get("magento_store_url");
@@ -44,16 +52,31 @@ Deno.serve(async (req) => {
             }, { status: 500 });
         }
         
+        // Get last sync time for incremental sync
+        const settings = await base44.asServiceRole.entities.ShippingSettings.list();
+        const lastSyncTime = settings[0]?.last_product_sync;
+        
+        // Build search criteria
+        let baseUrl = `${store_url}/rest/V1/products?searchCriteria[pageSize]=100`;
+        
+        // Add incremental filter if enabled and we have a last sync time
+        if (isIncrementalSync && lastSyncTime) {
+            console.log('Performing incremental sync since:', lastSyncTime);
+            baseUrl += `&searchCriteria[filter_groups][0][filters][0][field]=updated_at`;
+            baseUrl += `&searchCriteria[filter_groups][0][filters][0][value]=${lastSyncTime}`;
+            baseUrl += `&searchCriteria[filter_groups][0][filters][0][condition_type]=gt`;
+        } else {
+            console.log('Performing full sync (all products)');
+        }
+        
         // Fetch ALL products from Magento (with pagination)
-        console.log('Fetching products...');
         let allProducts = [];
         let currentPage = 1;
-        const pageSize = 100;
         let hasMorePages = true;
         
         while (hasMorePages) {
             const response = await fetch(
-                `${store_url}/rest/V1/products?searchCriteria[pageSize]=${pageSize}&searchCriteria[currentPage]=${currentPage}`,
+                `${baseUrl}&searchCriteria[currentPage]=${currentPage}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${api_key}`,
@@ -65,9 +88,20 @@ Deno.serve(async (req) => {
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Products API Failed:', errorText);
+                
+                // Retry logic for transient errors
+                if (retryCount < maxRetries && (response.status >= 500 || response.status === 429)) {
+                    retryCount++;
+                    const waitTime = Math.pow(2, retryCount) * 1000; // exponential backoff
+                    console.log(`Retrying in ${waitTime}ms... (attempt ${retryCount}/${maxRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                    return attemptSync();
+                }
+                
                 return Response.json({ 
                     error: `Failed to fetch products: ${response.status}`,
-                    details: errorText
+                    details: errorText,
+                    retries_attempted: retryCount
                 }, { status: 500 });
             }
 
@@ -78,7 +112,7 @@ Deno.serve(async (req) => {
                 console.log(`Fetched page ${currentPage}: ${data.items.length} products`);
                 
                 // Check if there are more pages
-                if (data.items.length < pageSize) {
+                if (data.items.length < 100) {
                     hasMorePages = false;
                 } else {
                     currentPage++;
@@ -94,7 +128,9 @@ Deno.serve(async (req) => {
                 synced_count: 0,
                 total_magento_products: 0,
                 products: [],
-                message: 'No products found in Magento'
+                message: isIncrementalSync && lastSyncTime 
+                    ? 'No product updates since last sync' 
+                    : 'No products found in Magento'
             });
         }
         
@@ -145,6 +181,13 @@ Deno.serve(async (req) => {
         if (transformedProducts.length > 0) {
             await base44.asServiceRole.entities.Product.bulkCreate(transformedProducts);
         }
+        
+        // Update last sync time
+        if (settings[0]) {
+            await base44.asServiceRole.entities.ShippingSettings.update(settings[0].id, {
+                last_product_sync: new Date().toISOString()
+            });
+        }
 
         return Response.json({
             success: true,
@@ -152,14 +195,29 @@ Deno.serve(async (req) => {
             new_count: transformedProducts.length,
             updated_count: updatedProducts.length,
             total_magento_products: allProducts.length,
+            sync_type: isIncrementalSync && lastSyncTime ? 'incremental' : 'full',
             products: [...transformedProducts, ...updatedProducts]
         });
 
-    } catch (error) {
-        console.error('Error fetching Magento products:', error);
-        return Response.json({ 
-            error: error.message,
-            details: 'Failed to fetch products from Magento'
-        }, { status: 500 });
-    }
+        } catch (error) {
+            console.error('Error fetching Magento products:', error);
+            
+            // Retry on network errors
+            if (retryCount < maxRetries && (error.name === 'TypeError' || error.message.includes('fetch'))) {
+                retryCount++;
+                const waitTime = Math.pow(2, retryCount) * 1000;
+                console.log(`Network error, retrying in ${waitTime}ms... (attempt ${retryCount}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                return attemptSync();
+            }
+            
+            return Response.json({ 
+                error: error.message,
+                details: 'Failed to fetch products from Magento',
+                retries_attempted: retryCount
+            }, { status: 500 });
+        }
+    };
+    
+    return attemptSync();
 });
