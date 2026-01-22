@@ -14,7 +14,9 @@ import {
   CheckCircle2,
   DollarSign,
   Box,
-  ChevronDown
+  ChevronDown,
+  Edit,
+  X
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,16 +24,28 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { format } from "date-fns";
 
 export default function Products() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [syncStatus, setSyncStatus] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editForm, setEditForm] = useState({ weight: '', box_type: '' });
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: () => base44.entities.Product.list('-last_synced')
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Product.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setEditingProduct(null);
+      setEditForm({ weight: '', box_type: '' });
+    }
   });
 
   const syncProductsMutation = useMutation({
