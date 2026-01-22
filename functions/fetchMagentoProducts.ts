@@ -44,27 +44,51 @@ Deno.serve(async (req) => {
             }, { status: 500 });
         }
         
-        // Fetch products from Magento
+        // Fetch ALL products from Magento (with pagination)
         console.log('Fetching products...');
-        const response = await fetch(`${store_url}/rest/V1/products?searchCriteria[pageSize]=100`, {
-            headers: {
-                'Authorization': `Bearer ${api_key}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Products API Failed:', errorText);
-            return Response.json({ 
-                error: `Failed to fetch products: ${response.status}`,
-                details: errorText
-            }, { status: 500 });
-        }
-
-        const data = await response.json();
+        let allProducts = [];
+        let currentPage = 1;
+        const pageSize = 100;
+        let hasMorePages = true;
         
-        if (!data.items || data.items.length === 0) {
+        while (hasMorePages) {
+            const response = await fetch(
+                `${store_url}/rest/V1/products?searchCriteria[pageSize]=${pageSize}&searchCriteria[currentPage]=${currentPage}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${api_key}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Products API Failed:', errorText);
+                return Response.json({ 
+                    error: `Failed to fetch products: ${response.status}`,
+                    details: errorText
+                }, { status: 500 });
+            }
+
+            const data = await response.json();
+            
+            if (data.items && data.items.length > 0) {
+                allProducts = allProducts.concat(data.items);
+                console.log(`Fetched page ${currentPage}: ${data.items.length} products`);
+                
+                // Check if there are more pages
+                if (data.items.length < pageSize) {
+                    hasMorePages = false;
+                } else {
+                    currentPage++;
+                }
+            } else {
+                hasMorePages = false;
+            }
+        }
+        
+        if (allProducts.length === 0) {
             return Response.json({
                 success: true,
                 synced_count: 0,
@@ -74,7 +98,7 @@ Deno.serve(async (req) => {
             });
         }
         
-        console.log(`Found ${data.items.length} products in Magento`);
+        console.log(`Found ${allProducts.length} total products in Magento`);
         
         // Get all existing products from our system
         const existingProducts = await base44.asServiceRole.entities.Product.list();
@@ -84,7 +108,7 @@ Deno.serve(async (req) => {
         const transformedProducts = [];
         const updatedProducts = [];
         
-        for (const magentoProduct of data.items) {
+        for (const magentoProduct of allProducts) {
             // Get stock info from extension attributes
             const stockItem = magentoProduct.extension_attributes?.stock_item;
             const stockQuantity = stockItem?.qty || 0;
@@ -127,7 +151,7 @@ Deno.serve(async (req) => {
             synced_count: transformedProducts.length + updatedProducts.length,
             new_count: transformedProducts.length,
             updated_count: updatedProducts.length,
-            total_magento_products: data.items.length,
+            total_magento_products: allProducts.length,
             products: [...transformedProducts, ...updatedProducts]
         });
 
