@@ -34,6 +34,7 @@ export default function Layout({ children, currentPageName }) {
   const navigation = [
     { name: 'Dashboard', page: 'Dashboard', icon: LayoutDashboard },
     { name: 'Orders', page: 'Orders', icon: Package },
+    { name: 'Products', page: 'Products', icon: Package },
     { name: 'Production', page: 'Production', icon: Package },
     { name: 'Staging', page: 'Staging', icon: Package },
     { name: 'Ready to Ship', page: 'ReadyToShip', icon: Truck },
