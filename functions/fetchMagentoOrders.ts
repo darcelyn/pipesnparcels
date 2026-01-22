@@ -65,15 +65,12 @@ Deno.serve(async (req) => {
         searchUrl += `&searchCriteria[filter_groups][0][filters][0][value]=${statusValue}`;
         searchUrl += `&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`;
 
-        // Add incremental time filter if enabled and we have a last sync time
-        if (isIncrementalSync && lastSyncTime) {
-            console.log('Performing incremental sync since:', lastSyncTime);
-            searchUrl += `&searchCriteria[filter_groups][1][filters][0][field]=updated_at`;
-            searchUrl += `&searchCriteria[filter_groups][1][filters][0][value]=${lastSyncTime}`;
-            searchUrl += `&searchCriteria[filter_groups][1][filters][0][condition_type]=gt`;
-        } else {
-            console.log('Performing full sync (recent orders only)');
-        }
+        // Filter for orders created on or after 11/15/2024
+        searchUrl += `&searchCriteria[filter_groups][1][filters][0][field]=created_at`;
+        searchUrl += `&searchCriteria[filter_groups][1][filters][0][value]=2024-11-15 00:00:00`;
+        searchUrl += `&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq`;
+        
+        console.log('Fetching orders with status "Order Received - Awaiting Fulfillment." from 11/15/2024 or newer');
         
         // Fetch orders with pagination (limit pages to prevent timeout)
         const MAX_PAGES = isIncrementalSync ? 10 : 50; // reasonable limits
