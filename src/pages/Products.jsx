@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 
 export default function Products() {
@@ -75,6 +76,26 @@ export default function Products() {
 
   const totalValue = products.reduce((sum, p) => sum + (p.price * p.stock_quantity), 0);
   const lowStockCount = products.filter(p => p.stock_quantity < 10).length;
+
+  const handleEditProduct = (product) => {
+    setEditingProduct(product);
+    setEditForm({
+      weight: product.weight || '',
+      box_type: product.box_type || ''
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (editingProduct) {
+      updateProductMutation.mutate({
+        id: editingProduct.id,
+        data: {
+          weight: parseFloat(editForm.weight) || 0,
+          box_type: editForm.box_type
+        }
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -223,22 +244,32 @@ export default function Products() {
                   <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                     {/* Product Info */}
                     <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="font-semibold text-slate-900 text-lg mb-1">
-                            {product.name}
-                          </h3>
-                          <p className="text-sm text-slate-500">SKU: {product.sku}</p>
-                        </div>
-                        <Badge 
-                          className={product.status === 'enabled' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-slate-100 text-slate-800'
-                          }
-                        >
-                          {product.status}
-                        </Badge>
-                      </div>
+                     <div className="flex items-start justify-between mb-2">
+                       <div>
+                         <h3 className="font-semibold text-slate-900 text-lg mb-1">
+                           {product.name}
+                         </h3>
+                         <p className="text-sm text-slate-500">SKU: {product.sku}</p>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         <Badge 
+                           className={product.status === 'enabled' 
+                             ? 'bg-green-100 text-green-800' 
+                             : 'bg-slate-100 text-slate-800'
+                           }
+                         >
+                           {product.status}
+                         </Badge>
+                         <Button
+                           variant="ghost"
+                           size="icon"
+                           onClick={() => handleEditProduct(product)}
+                           className="h-8 w-8"
+                         >
+                           <Edit className="h-4 w-4" />
+                         </Button>
+                       </div>
+                     </div>
                       
                       {product.description && (
                         <p className="text-sm text-slate-600 line-clamp-2 mb-3">
@@ -283,6 +314,58 @@ export default function Products() {
             ))}
           </div>
         )}
+
+        {/* Edit Product Dialog */}
+        <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Product - {editingProduct?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="weight">Weight (lbs)</Label>
+                <Input
+                  id="weight"
+                  type="number"
+                  step="0.01"
+                  value={editForm.weight}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, weight: e.target.value }))}
+                  placeholder="Enter weight"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="box_type">Box Type / Notes</Label>
+                <Input
+                  id="box_type"
+                  value={editForm.box_type}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, box_type: e.target.value }))}
+                  placeholder="e.g., Small Box, Envelope"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingProduct(null)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSaveEdit}
+                disabled={updateProductMutation.isPending}
+                className="bg-teal-600 hover:bg-teal-700"
+              >
+                {updateProductMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
