@@ -56,25 +56,31 @@ Deno.serve(async (req) => {
         const settings = await base44.asServiceRole.entities.ShippingSettings.list();
         const lastSyncTime = settings[0]?.last_order_sync;
         
-        // Build search criteria
+        // Build search criteria - always filter for pending/processing orders
         let searchUrl = `${store_url}/rest/V1/orders?searchCriteria[pageSize]=100`;
-        
-        // Add incremental filter if enabled and we have a last sync time
+
+        // Filter for orders that need fulfillment (pending/processing status)
+        searchUrl += `&searchCriteria[filter_groups][0][filters][0][field]=status`;
+        searchUrl += `&searchCriteria[filter_groups][0][filters][0][value]=pending,processing`;
+        searchUrl += `&searchCriteria[filter_groups][0][filters][0][condition_type]=in`;
+
+        // Add incremental time filter if enabled and we have a last sync time
         if (isIncrementalSync && lastSyncTime) {
             console.log('Performing incremental sync since:', lastSyncTime);
-            searchUrl += `&searchCriteria[filter_groups][0][filters][0][field]=updated_at`;
-            searchUrl += `&searchCriteria[filter_groups][0][filters][0][value]=${lastSyncTime}`;
-            searchUrl += `&searchCriteria[filter_groups][0][filters][0][condition_type]=gt`;
+            searchUrl += `&searchCriteria[filter_groups][1][filters][0][field]=updated_at`;
+            searchUrl += `&searchCriteria[filter_groups][1][filters][0][value]=${lastSyncTime}`;
+            searchUrl += `&searchCriteria[filter_groups][1][filters][0][condition_type]=gt`;
         } else {
-            console.log('Performing full sync (historical orders)');
+            console.log('Performing full sync (recent orders only)');
         }
         
-        // Fetch orders with pagination
+        // Fetch orders with pagination (limit pages to prevent timeout)
+        const MAX_PAGES = isIncrementalSync ? 10 : 50; // reasonable limits
         let allOrders = [];
         let currentPage = 1;
         let hasMorePages = true;
-        
-        while (hasMorePages) {
+
+        while (hasMorePages && currentPage <= MAX_PAGES) {
             const pageUrl = `${searchUrl}&searchCriteria[currentPage]=${currentPage}`;
             console.log(`Fetching page ${currentPage}...`);
             
@@ -123,6 +129,8 @@ Deno.serve(async (req) => {
         
         console.log(`Total orders fetched: ${allOrders.length}`);
         
+        console.log(`Total orders fetched: ${allOrders.length}`);
+
         if (allOrders.length === 0) {
             return Response.json({
                 success: true,
@@ -131,27 +139,18 @@ Deno.serve(async (req) => {
                 orders: [],
                 message: isIncrementalSync && lastSyncTime 
                     ? 'No new orders since last sync' 
-                    : 'No orders found in Magento'
+                    : 'No pending orders found in Magento'
             });
         }
-        
-        // Filter orders by the status we want
-        const targetStatus = 'Order Received - Awaiting Fulfillment.';
-        const filteredOrders = allOrders.filter(o => o.status === targetStatus);
-        
-        console.log(`Orders with status "${targetStatus}": ${filteredOrders.length}`);
-        
-        // Get all order numbers from Magento orders
-        const magentoOrderNumbers = data.items.map(o => o.increment_id);
         
         // Check which orders already exist in our system (single query)
         const existingOrders = await base44.asServiceRole.entities.Order.list();
         const existingOrderNumbers = new Set(existingOrders.map(o => o.order_number));
-        
+
         // Transform Magento orders to our Order entity format
         const transformedOrders = [];
-        
-        for (const magentoOrder of filteredOrders) {
+
+        for (const magentoOrder of allOrders) {
             // Skip if already exists
             if (existingOrderNumbers.has(magentoOrder.increment_id)) {
                 continue;
@@ -226,7 +225,6 @@ Deno.serve(async (req) => {
             success: true,
             imported_count: transformedOrders.length,
             total_magento_orders: allOrders.length,
-            filtered_orders: filteredOrders.length,
             sync_type: isIncrementalSync && lastSyncTime ? 'incremental' : 'full',
             orders: transformedOrders
         });
