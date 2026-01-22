@@ -73,7 +73,8 @@ export default function Settings() {
     markup_percentage: 0,
     fedex_account_number: '',
     usps_account_id: '',
-    magento_store_url: ''
+    magento_store_url: '',
+    magento_two_way_sync: false
   });
 
   const [newBox, setNewBox] = useState({
@@ -608,14 +609,67 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="preferences">
-            <Card className="border-slate-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <SettingsIcon className="w-5 h-5 text-teal-600" />
-                  Shipping Preferences
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
+            <div className="space-y-6">
+              <Card className="border-slate-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="w-5 h-5 text-teal-600" />
+                    Magento Integration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="magento_store_url">Magento Store URL</Label>
+                    <Input
+                      id="magento_store_url"
+                      value={formData.magento_store_url || ''}
+                      onChange={(e) => handleFieldChange('magento_store_url', e.target.value)}
+                      placeholder="https://your-store.com"
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      Your Magento store base URL (e.g., https://example.com)
+                    </p>
+                  </div>
+                  <div>
+                    <Label>API Credentials</Label>
+                    <p className="text-sm text-slate-500 mb-2">
+                      Configure your Magento API key in the app secrets (magento_api_key)
+                    </p>
+                  </div>
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="two_way_sync">Two-Way Sync</Label>
+                        <p className="text-sm text-slate-500">
+                          Automatically update Magento when orders are modified here
+                        </p>
+                      </div>
+                      <Switch
+                        id="two_way_sync"
+                        checked={formData.magento_two_way_sync || false}
+                        onCheckedChange={(checked) => handleFieldChange('magento_two_way_sync', checked)}
+                      />
+                    </div>
+                    {formData.magento_two_way_sync && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
+                        <p className="text-sm text-blue-800">
+                          <strong>Two-way sync enabled:</strong> Order status changes and tracking info will automatically sync back to Magento.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <SettingsIcon className="w-5 h-5 text-teal-600" />
+                    Shipping Preferences
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <Label>Default Carrier Selection</Label>
@@ -690,6 +744,7 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
+            </div>
           </TabsContent>
         </Tabs>
 
