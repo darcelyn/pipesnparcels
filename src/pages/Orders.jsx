@@ -17,8 +17,15 @@ import {
   Tags,
   Loader2,
   Printer,
-  Upload
+  Upload,
+  ChevronDown
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Orders() {
   const queryClient = useQueryClient();
@@ -33,13 +40,17 @@ export default function Orders() {
   });
 
   const syncMagentoMutation = useMutation({
-    mutationFn: () => base44.functions.invoke('fetchMagentoOrders'),
-    onSuccess: (response) => {
+    mutationFn: async ({ incremental = true }) => {
+      const response = await base44.functions.invoke('fetchMagentoOrders', { incremental });
+      return response.data;
+    },
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
-      alert(`✓ Synced ${response.data.imported_count} new orders from Magento`);
+      const syncType = data.sync_type === 'incremental' ? 'Incremental' : 'Full';
+      alert(`${syncType} sync: ${data.imported_count} new orders imported (${data.filtered_orders} matched filters)`);
     },
     onError: (error) => {
-      alert(`Failed to sync: ${error.message}`);
+      alert(`Failed to sync orders: ${error.message}`);
     }
   });
 
@@ -264,15 +275,27 @@ export default function Orders() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => syncMagentoMutation.mutate()}
-              disabled={syncMagentoMutation.isPending}
-              className="border-teal-300 text-teal-700 hover:bg-teal-50"
-            >
-              <Package className={`w-4 h-4 mr-2 ${syncMagentoMutation.isPending ? 'animate-spin' : ''}`} />
-              Sync Magento
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  disabled={syncMagentoMutation.isPending}
+                  className="border-teal-300 text-teal-700 hover:bg-teal-50"
+                >
+                  <Package className={`w-4 h-4 mr-2 ${syncMagentoMutation.isPending ? 'animate-spin' : ''}`} />
+                  Sync Magento
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => syncMagentoMutation.mutate({ incremental: true })}>
+                  Quick Sync (Updates Only)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => syncMagentoMutation.mutate({ incremental: false })}>
+                  Full Sync (All Orders)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button 
               variant="outline" 
               onClick={() => refetch()}
