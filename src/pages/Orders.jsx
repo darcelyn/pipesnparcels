@@ -47,7 +47,7 @@ export default function Orders() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       const syncType = data.sync_type === 'incremental' ? 'Incremental' : 'Full';
-      alert(`${syncType} sync: ${data.imported_count} new orders imported (${data.filtered_orders} matched filters)`);
+      alert(`${syncType} sync: ${data.imported_count} new orders imported (${data.total_magento_orders} matched filters)`);
     },
     onError: (error) => {
       alert(`Failed to sync orders: ${error.message}`);
