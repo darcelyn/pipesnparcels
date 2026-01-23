@@ -65,12 +65,12 @@ Deno.serve(async (req) => {
         searchUrl += `&searchCriteria[filter_groups][0][filters][0][value]=${statusValue}`;
         searchUrl += `&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`;
 
-        // Filter for orders created on or after 11/01/2025
+        // Filter for orders created on or after 11/01/2024
         searchUrl += `&searchCriteria[filter_groups][1][filters][0][field]=created_at`;
-        searchUrl += `&searchCriteria[filter_groups][1][filters][0][value]=2025-11-01 00:00:00`;
+        searchUrl += `&searchCriteria[filter_groups][1][filters][0][value]=2024-11-01 00:00:00`;
         searchUrl += `&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq`;
         
-        console.log('Fetching orders with status "Order Received - Awaiting Fulfillment." from 11/01/2025 or newer');
+        console.log('Fetching orders with status "Order Received - Awaiting Fulfillment." from 11/01/2024 or newer');
         
         // Fetch orders with pagination (limit pages to prevent timeout)
         const MAX_PAGES = isIncrementalSync ? 10 : 50; // reasonable limits
