@@ -18,6 +18,7 @@ import {
   Edit,
   X
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -335,14 +336,20 @@ export default function Products() {
                 />
               </div>
               <div>
-                <Label htmlFor="box_type">Box Type / Notes</Label>
-                <Input
-                  id="box_type"
+                <Label htmlFor="box_type">Box Type</Label>
+                <Select
                   value={editForm.box_type}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, box_type: e.target.value }))}
-                  placeholder="e.g., Small Box, Envelope"
-                  className="mt-1"
-                />
+                  onValueChange={(value) => setEditForm(prev => ({ ...prev, box_type: value }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select box type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LONG">LONG</SelectItem>
+                    <SelectItem value="MAIN">MAIN</SelectItem>
+                    <SelectItem value="XLFULL">XLFULL</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>
