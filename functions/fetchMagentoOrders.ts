@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
         searchUrl += `&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq`;
         
         console.log('Fetching orders with status "Order Received - Awaiting Fulfillment." from 11/01/2025 or newer');
+        console.log('Full search URL:', searchUrl);
         
         // Fetch orders with pagination (limit pages to prevent timeout)
         const MAX_PAGES = isIncrementalSync ? 10 : 50; // reasonable limits
@@ -81,6 +82,7 @@ Deno.serve(async (req) => {
         while (hasMorePages && currentPage <= MAX_PAGES) {
             const pageUrl = `${searchUrl}&searchCriteria[currentPage]=${currentPage}`;
             console.log(`Fetching page ${currentPage}...`);
+            console.log('Full page URL:', pageUrl);
             
             const response = await fetch(pageUrl, {
                 headers: {
@@ -110,10 +112,15 @@ Deno.serve(async (req) => {
             }
 
             const data = await response.json();
+            console.log('API Response:', JSON.stringify({ total_count: data.total_count, items_count: data.items?.length }));
             
             if (data.items && data.items.length > 0) {
                 allOrders = allOrders.concat(data.items);
                 console.log(`Page ${currentPage}: ${data.items.length} orders`);
+                // Log first order for debugging
+                if (currentPage === 1) {
+                    console.log('Sample order:', JSON.stringify(data.items[0], null, 2));
+                }
                 
                 if (data.items.length < 100) {
                     hasMorePages = false;
