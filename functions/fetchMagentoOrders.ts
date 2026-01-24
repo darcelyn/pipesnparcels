@@ -64,11 +64,6 @@ Deno.serve(async (req) => {
         searchUrl += `&searchCriteria[filter_groups][0][filters][0][field]=status`;
         searchUrl += `&searchCriteria[filter_groups][0][filters][0][value]=${statusValue}`;
         searchUrl += `&searchCriteria[filter_groups][0][filters][0][condition_type]=eq`;
-
-        // Filter for orders created on or after 11/01/2025
-        searchUrl += `&searchCriteria[filter_groups][1][filters][0][field]=created_at`;
-        searchUrl += `&searchCriteria[filter_groups][1][filters][0][value]=2025-11-01 00:00:00`;
-        searchUrl += `&searchCriteria[filter_groups][1][filters][0][condition_type]=gteq`;
         
         console.log('Fetching orders with status "Order Received - Awaiting Fulfillment." from 11/01/2025 or newer');
         console.log('Full search URL:', searchUrl);
