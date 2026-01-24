@@ -34,7 +34,7 @@ export default function Orders() {
   const [aiAssistOrder, setAiAssistOrder] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
-    status: 'Order Received - Awaiting Fulfillment.',
+    status: 'all',
     priority: 'all',
     source: 'all'
   });
