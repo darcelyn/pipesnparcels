@@ -36,6 +36,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Orders', page: 'Orders', icon: Package },
     { name: 'On Hold', page: 'OnHold', icon: Package },
     { name: 'Products', page: 'Products', icon: Package },
+    { name: 'Inventory', page: 'Inventory', icon: Package },
     { name: 'Production', page: 'Production', icon: Package },
     { name: 'Staging', page: 'Staging', icon: Package },
     { name: 'Ready to Ship', page: 'ReadyToShip', icon: Truck },

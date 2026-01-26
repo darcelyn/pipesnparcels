@@ -14,6 +14,7 @@ import SalesPage from './pages/SalesPage';
 import Settings from './pages/Settings';
 import Shipments from './pages/Shipments';
 import Staging from './pages/Staging';
+import Inventory from './pages/Inventory';
 import __Layout from './Layout.jsx';
 
 
@@ -34,6 +35,7 @@ export const PAGES = {
     "Settings": Settings,
     "Shipments": Shipments,
     "Staging": Staging,
+    "Inventory": Inventory,
 }
 
 export const pagesConfig = {
