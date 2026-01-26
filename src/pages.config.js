@@ -1,6 +1,7 @@
 import CreateLabel from './pages/CreateLabel';
 import Dashboard from './pages/Dashboard';
 import ManualOrder from './pages/ManualOrder';
+import OnHold from './pages/OnHold';
 import Orders from './pages/Orders';
 import Production from './pages/Production';
 import ProductionPlanning from './pages/ProductionPlanning';
@@ -12,7 +13,6 @@ import SalesPage from './pages/SalesPage';
 import Settings from './pages/Settings';
 import Shipments from './pages/Shipments';
 import Staging from './pages/Staging';
-import OnHold from './pages/OnHold';
 import __Layout from './Layout.jsx';
 
 
@@ -20,6 +20,7 @@ export const PAGES = {
     "CreateLabel": CreateLabel,
     "Dashboard": Dashboard,
     "ManualOrder": ManualOrder,
+    "OnHold": OnHold,
     "Orders": Orders,
     "Production": Production,
     "ProductionPlanning": ProductionPlanning,
@@ -31,7 +32,6 @@ export const PAGES = {
     "Settings": Settings,
     "Shipments": Shipments,
     "Staging": Staging,
-    "OnHold": OnHold,
 }
 
 export const pagesConfig = {

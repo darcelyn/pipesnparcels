@@ -5,33 +5,30 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import OrderCard from "@/components/orders/OrderCard";
-import OrderFilters from "@/components/orders/OrderFilters";
-import PrintOrderList from "@/components/orders/PrintOrderList";
-import PrioritySuggestion from "@/components/orders/PrioritySuggestion";
-import { 
-  Plus, 
-  RefreshCw, 
-  Package, 
-  Tags,
-  Loader2,
-  Printer,
-  Upload,
-  ChevronDown
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { 
+  RefreshCw, 
+  Upload,
+  Plus,
+  ChevronRight,
+  MoreVertical,
+  Search
+} from "lucide-react";
+import { format } from "date-fns";
 
 export default function Orders() {
   const queryClient = useQueryClient();
   const [selectedOrders, setSelectedOrders] = useState([]);
+  const [expandedOrders, setExpandedOrders] = useState([]);
   const [showImportDialog, setShowImportDialog] = useState(false);
-  const [aiAssistOrder, setAiAssistOrder] = useState(null);
   const [filters, setFilters] = useState({
     search: '',
     status: 'all',
@@ -69,7 +66,6 @@ export default function Orders() {
               customer_email: { type: "string" },
               street1: { type: "string" },
               street2: { type: "string" },
-              street3: { type: "string" },
               city: { type: "string" },
               state: { type: "string" },
               country: { type: "string" },
@@ -99,7 +95,7 @@ export default function Orders() {
             customer_email: row.customer_email,
             shipping_address: {
               street1: row.street1,
-              street2: [row.street2, row.street3].filter(Boolean).join(' '),
+              street2: row.street2,
               city: row.city,
               state: row.state,
               zip: '',
@@ -138,20 +134,12 @@ export default function Orders() {
     }
   });
 
-  const bulkUpdateStatusMutation = useMutation({
-    mutationFn: async ({ orderIds, status }) => {
-      const user = await base44.auth.me();
-      const updates = orderIds.map(id => 
-        base44.entities.Order.update(id, { 
-          status,
-          ...(status === 'staging' ? { staged_by: user.email } : {})
-        })
-      );
-      return Promise.all(updates);
+  const updateOrderMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      return base44.entities.Order.update(id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
-      setSelectedOrders([]);
     }
   });
 
@@ -162,12 +150,8 @@ export default function Orders() {
 
   const filteredOrders = useMemo(() => {
     let filtered = orders.filter(order => {
-      // Only show pending orders that haven't been moved to production workflow
-      if (order.status !== 'pending') {
-        return false;
-      }
+      if (order.status !== 'pending') return false;
 
-      // Search filter
       if (filters.search) {
         const search = filters.search.toLowerCase();
         const matchesSearch = 
@@ -178,50 +162,22 @@ export default function Orders() {
         if (!matchesSearch) return false;
       }
       
-      // Status filter
-      if (filters.status !== 'all' && order.status !== filters.status) {
-        return false;
-      }
-      
-      // Priority filter
-      if (filters.priority !== 'all' && order.priority !== filters.priority) {
-        return false;
-      }
-      
-      // Source filter
-      if (filters.source !== 'all' && order.source !== filters.source) {
-        return false;
-      }
+      if (filters.status !== 'all' && order.status !== filters.status) return false;
+      if (filters.priority !== 'all' && order.priority !== filters.priority) return false;
+      if (filters.source !== 'all' && order.source !== filters.source) return false;
       
       return true;
     });
     
-    // Sort by priority: rush > priority > normal
     const priorityOrder = { rush: 0, priority: 1, normal: 2 };
     filtered.sort((a, b) => {
       const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
       if (priorityDiff !== 0) return priorityDiff;
-      // Then by created date (newest first)
       return new Date(b.created_date) - new Date(a.created_date);
     });
     
     return filtered;
   }, [orders, filters]);
-
-  const pendingOrders = filteredOrders;
-
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  const handleResetFilters = () => {
-    setFilters({
-      search: '',
-      status: 'all',
-      priority: 'all',
-      source: 'all'
-    });
-  };
 
   const handleSelectOrder = (orderId) => {
     setSelectedOrders(prev => 
@@ -232,209 +188,299 @@ export default function Orders() {
   };
 
   const handleSelectAll = () => {
-    if (selectedOrders.length === pendingOrders.length) {
+    if (selectedOrders.length === filteredOrders.length) {
       setSelectedOrders([]);
     } else {
-      setSelectedOrders(pendingOrders.map(o => o.id));
+      setSelectedOrders(filteredOrders.map(o => o.id));
     }
   };
 
-  const handleCreateLabel = (order) => {
-    window.location.href = createPageUrl('CreateLabel') + `?orderId=${order.id}`;
+  const toggleExpand = (orderId) => {
+    setExpandedOrders(prev =>
+      prev.includes(orderId)
+        ? prev.filter(id => id !== orderId)
+        : [...prev, orderId]
+    );
   };
 
-  const handleBatchCreateLabels = () => {
-    const orderIds = selectedOrders.join(',');
-    window.location.href = createPageUrl('CreateLabel') + `?orderIds=${orderIds}`;
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+      production: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+      processing: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+      staging: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+      hold: 'bg-orange-500/20 text-orange-300 border-orange-500/30'
+    };
+    return colors[status] || 'bg-gray-500/20 text-gray-300 border-gray-500/30';
   };
 
-  const handleBulkStatusChange = (status) => {
-    if (selectedOrders.length === 0) return;
-    if (confirm(`Move ${selectedOrders.length} order(s) to ${status}?`)) {
-      bulkUpdateStatusMutation.mutate({ orderIds: selectedOrders, status });
-    }
+  const getPriorityColor = (priority) => {
+    const colors = {
+      rush: 'bg-red-500/20 text-red-300 border-red-500/30',
+      priority: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+      normal: 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+    };
+    return colors[priority] || 'bg-gray-500/20 text-gray-300 border-gray-500/30';
   };
 
-  const handleAiSuggestionAccept = async (suggestedPriority) => {
-    if (aiAssistOrder) {
-      await base44.entities.Order.update(aiAssistOrder.id, { priority: suggestedPriority });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      setAiAssistOrder(null);
-    }
+  const getSourceColor = (source) => {
+    const colors = {
+      magento: 'bg-orange-600/20 text-orange-400 border-orange-600/30',
+      manual: 'bg-blue-600/20 text-blue-400 border-blue-600/30'
+    };
+    return colors[source] || 'bg-gray-500/20 text-gray-300 border-gray-500/30';
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-[#1a1a1a]">
+      <div className="max-w-[1400px] mx-auto px-6 py-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Orders</h1>
-            <p className="text-slate-500 mt-1">
-              {pendingOrders.length} new order{pendingOrders.length !== 1 ? 's' : ''} awaiting processing
-            </p>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white mb-1">ORDERS</h1>
+          <p className="text-sm text-gray-400">Manage incoming orders and track fulfillment</p>
+        </div>
+
+        {/* Controls Bar */}
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div className="flex-1 flex items-center gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Input
+                placeholder="Search orders, customers, SKUs..."
+                value={filters.search}
+                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                className="pl-10 bg-[#252525] border-[#3a3a3a] text-white placeholder:text-gray-500 h-9 text-sm"
+              />
+            </div>
+            
+            <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+              <SelectTrigger className="w-36 bg-[#252525] border-[#3a3a3a] text-white h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#252525] border-[#3a3a3a]">
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="production">Production</SelectItem>
+                <SelectItem value="staging">Staging</SelectItem>
+                <SelectItem value="processing">Processing</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.priority} onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}>
+              <SelectTrigger className="w-36 bg-[#252525] border-[#3a3a3a] text-white h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#252525] border-[#3a3a3a]">
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="rush">Rush</SelectItem>
+                <SelectItem value="priority">Priority</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.source} onValueChange={(value) => setFilters(prev => ({ ...prev, source: value }))}>
+              <SelectTrigger className="w-36 bg-[#252525] border-[#3a3a3a] text-white h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#252525] border-[#3a3a3a]">
+                <SelectItem value="all">All Sources</SelectItem>
+                <SelectItem value="magento">Magento</SelectItem>
+                <SelectItem value="manual">Manual</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div className="flex gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  disabled={syncMagentoMutation.isPending}
-                  className="border-teal-300 text-teal-700 hover:bg-teal-50"
-                >
-                  <Package className={`w-4 h-4 mr-2 ${syncMagentoMutation.isPending ? 'animate-spin' : ''}`} />
-                  Sync Magento
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => syncMagentoMutation.mutate({ incremental: true })}>
-                  Quick Sync (Updates Only)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => syncMagentoMutation.mutate({ incremental: false })}>
-                  Full Sync (All Orders)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button 
-              variant="outline" 
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="border-slate-300"
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => syncMagentoMutation.mutate({ incremental: true })}
+              disabled={syncMagentoMutation.isPending}
+              className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-9 text-sm"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-              Refresh
+              <RefreshCw className={`w-4 h-4 mr-2 ${syncMagentoMutation.isPending ? 'animate-spin' : ''}`} />
+              SYNC MAGENTO
             </Button>
-            <Link to={createPageUrl('ManualOrder')}>
-              <Button variant="outline" className="border-slate-300">
-                <Plus className="w-4 h-4 mr-2" />
-                Manual Order
-              </Button>
-            </Link>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setShowImportDialog(true)}
-              className="border-slate-300"
+              className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-9 text-sm"
             >
               <Upload className="w-4 h-4 mr-2" />
-              Import CSV
+              IMPORT CSV
             </Button>
-            {selectedOrders.length > 0 && (
-              <>
-                <Select onValueChange={handleBulkStatusChange}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Change Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="production">Move to Production</SelectItem>
-                    <SelectItem value="hold">Put on Hold</SelectItem>
-                    <SelectItem value="cancelled">Cancel Orders</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button 
-                  onClick={handleBatchCreateLabels}
-                  className="bg-teal-600 hover:bg-teal-700"
-                >
-                  <Tags className="w-4 h-4 mr-2" />
-                  Create {selectedOrders.length} Label{selectedOrders.length !== 1 ? 's' : ''}
-                </Button>
-                <Button
-                  onClick={() => window.print()}
-                  variant="outline"
-                  className="border-slate-300"
-                >
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print List
-                </Button>
-              </>
+            <Link to={createPageUrl('ManualOrder')}>
+              <Button
+                size="sm"
+                className="bg-[#e91e63] hover:bg-[#d81b60] text-white h-9 text-sm font-semibold"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                NEW ORDER
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="bg-[#252525] rounded-lg border border-[#3a3a3a] overflow-hidden">
+          {/* Table Header */}
+          <div className="bg-[#2d2d4a] border-b border-[#3a3a3a]">
+            <div className="grid grid-cols-[40px_120px_200px_120px_120px_120px_120px_180px_40px] gap-4 px-4 py-3 text-xs font-medium text-gray-400 uppercase">
+              <div className="flex items-center">
+                <Checkbox
+                  checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
+                  onCheckedChange={handleSelectAll}
+                  className="border-gray-500"
+                />
+              </div>
+              <div>ORDER #</div>
+              <div>CUSTOMER</div>
+              <div>ITEMS</div>
+              <div>STATUS</div>
+              <div>PRIORITY</div>
+              <div>SOURCE</div>
+              <div>DATE</div>
+              <div></div>
+            </div>
+          </div>
+
+          {/* Table Body */}
+          <div className="divide-y divide-[#3a3a3a]">
+            {isLoading ? (
+              <div className="py-20 text-center text-gray-500">Loading...</div>
+            ) : filteredOrders.length === 0 ? (
+              <div className="py-20 text-center text-gray-500">No orders found</div>
+            ) : (
+              filteredOrders.map((order) => (
+                <div key={order.id}>
+                  <div className="grid grid-cols-[40px_120px_200px_120px_120px_120px_120px_180px_40px] gap-4 px-4 py-3 text-sm items-center hover:bg-[#2a2a2a] transition-colors">
+                    <div className="flex items-center">
+                      <Checkbox
+                        checked={selectedOrders.includes(order.id)}
+                        onCheckedChange={() => handleSelectOrder(order.id)}
+                        className="border-gray-500"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-white font-medium">
+                      <button
+                        onClick={() => toggleExpand(order.id)}
+                        className="hover:bg-[#3a3a3a] p-1 rounded"
+                      >
+                        <ChevronRight
+                          className={`w-4 h-4 transition-transform ${
+                            expandedOrders.includes(order.id) ? 'rotate-90' : ''
+                          }`}
+                        />
+                      </button>
+                      {order.order_number}
+                    </div>
+                    
+                    <div>
+                      <div className="text-white font-medium text-sm">{order.customer_name}</div>
+                      <div className="text-gray-400 text-xs">{order.customer_email}</div>
+                    </div>
+                    
+                    <div className="text-gray-300">{order.items?.length || 0} item(s)</div>
+                    
+                    <div>
+                      <Badge className={`${getStatusColor(order.status)} border text-xs px-2 py-0.5`}>
+                        {order.status}
+                      </Badge>
+                    </div>
+                    
+                    <div>
+                      <Badge className={`${getPriorityColor(order.priority)} border text-xs px-2 py-0.5`}>
+                        {order.priority}
+                      </Badge>
+                    </div>
+                    
+                    <div>
+                      <Badge className={`${getSourceColor(order.source)} border text-xs px-2 py-0.5`}>
+                        {order.source}
+                      </Badge>
+                    </div>
+                    
+                    <div className="text-gray-300 text-xs">
+                      {format(new Date(order.created_date), 'MMM d, yyyy, h:mm a')}
+                    </div>
+                    
+                    <div className="flex justify-end">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white hover:bg-[#3a3a3a]">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-[#252525] border-[#3a3a3a]">
+                          <DropdownMenuItem
+                            onClick={() => updateOrderMutation.mutate({ id: order.id, data: { status: 'production' } })}
+                            className="text-white hover:bg-[#3a3a3a]"
+                          >
+                            Move to Production
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => updateOrderMutation.mutate({ id: order.id, data: { status: 'hold' } })}
+                            className="text-white hover:bg-[#3a3a3a]"
+                          >
+                            Put on Hold
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => window.location.href = createPageUrl('CreateLabel') + `?orderId=${order.id}`}
+                            className="text-white hover:bg-[#3a3a3a]"
+                          >
+                            Create Label
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                  
+                  {/* Expanded Details */}
+                  {expandedOrders.includes(order.id) && (
+                    <div className="bg-[#1f1f1f] border-t border-[#3a3a3a] px-4 py-4">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase">Shipping Address</h4>
+                          <div className="text-sm text-gray-300 space-y-1">
+                            <div>{order.shipping_address?.street1}</div>
+                            {order.shipping_address?.street2 && <div>{order.shipping_address.street2}</div>}
+                            <div>
+                              {order.shipping_address?.city}, {order.shipping_address?.state} {order.shipping_address?.zip}
+                            </div>
+                            <div>{order.shipping_address?.country || 'US'}</div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase">Order Items</h4>
+                          <div className="space-y-2">
+                            {order.items?.map((item, idx) => (
+                              <div key={idx} className="text-sm text-gray-300 flex justify-between">
+                                <span>{item.name}</span>
+                                <span className="text-gray-400">x{item.quantity}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
             )}
           </div>
         </div>
-
-        {/* Filters */}
-        <div className="mb-6">
-          <OrderFilters 
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onReset={handleResetFilters}
-          />
-        </div>
-
-        {/* Select All */}
-        {pendingOrders.length > 0 && (
-          <div className="flex items-center gap-3 mb-4 px-1">
-            <Checkbox 
-              checked={selectedOrders.length === pendingOrders.length && pendingOrders.length > 0}
-              onCheckedChange={handleSelectAll}
-            />
-            <span className="text-sm text-slate-600">
-              {selectedOrders.length > 0 
-                ? `${selectedOrders.length} selected`
-                : 'Select all'
-              }
-            </span>
-          </div>
-        )}
-
-        {/* AI Priority Assistant */}
-        {aiAssistOrder && (
-          <div className="mb-6">
-            <PrioritySuggestion
-              order={aiAssistOrder}
-              onAccept={handleAiSuggestionAccept}
-              onClose={() => setAiAssistOrder(null)}
-            />
-          </div>
-        )}
-
-        {/* Orders List */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
-          </div>
-        ) : filteredOrders.length === 0 ? (
-          <div className="text-center py-20">
-            <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No orders found</h3>
-            <p className="text-slate-500 mb-6">
-              {filters.search || filters.status !== 'all' || filters.priority !== 'all' 
-                ? 'Try adjusting your filters'
-                : 'Orders from Magento will appear here'}
-            </p>
-            <Link to={createPageUrl('ManualOrder')}>
-              <Button className="bg-teal-600 hover:bg-teal-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Manual Order
-              </Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredOrders.map(order => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                selected={selectedOrders.includes(order.id)}
-                onSelect={handleSelectOrder}
-                onCreateLabel={handleCreateLabel}
-                showCheckbox={order.status === 'pending'}
-                onAiAssist={() => setAiAssistOrder(order)}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
-      {selectedOrders.length > 0 && (
-        <PrintOrderList orders={orders.filter(o => selectedOrders.includes(o.id))} />
-      )}
-
+      {/* Import CSV Dialog */}
       {showImportDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">Import Orders from CSV</h2>
-            <p className="text-sm text-slate-600 mb-4">
-              Upload a CSV file with columns: order_number, customer_name, customer_email, street1, street2, street3, city, state, country, phone, sku, item_name, quantity, weight, priority, special_instructions
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#252525] border border-[#3a3a3a] rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-white mb-4">Import Orders from CSV</h2>
+            <p className="text-sm text-gray-400 mb-4">
+              Upload a CSV file with columns: order_number, customer_name, customer_email, street1, city, state, sku, item_name, quantity, weight
             </p>
             <input
               type="file"
@@ -444,23 +490,18 @@ export default function Orders() {
                 if (file) importCsvMutation.mutate(file);
               }}
               disabled={importCsvMutation.isPending}
-              className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 mb-4"
+              className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-[#e91e63] file:text-white hover:file:bg-[#d81b60] mb-4"
             />
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
                 onClick={() => setShowImportDialog(false)}
                 disabled={importCsvMutation.isPending}
+                className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#3a3a3a]"
               >
                 Cancel
               </Button>
             </div>
-            {importCsvMutation.isPending && (
-              <div className="flex items-center justify-center mt-4">
-                <Loader2 className="w-5 h-5 animate-spin text-teal-600 mr-2" />
-                <span className="text-sm text-slate-600">Processing CSV...</span>
-              </div>
-            )}
           </div>
         </div>
       )}
