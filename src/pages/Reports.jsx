@@ -288,30 +288,25 @@ Answer the following question based on the data above. Be specific, include numb
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 print:bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-[#1a1a1a] print:bg-white">
+      <div className="max-w-[1400px] mx-auto px-6 py-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 print:hidden">
+        <div className="flex items-center justify-between mb-6 print:hidden">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-purple-700" />
-              </div>
-              Reports & Analytics
-            </h1>
-            <p className="text-slate-500 mt-1">
+            <h1 className="text-2xl font-bold text-white mb-1">REPORTS & ANALYTICS</h1>
+            <p className="text-sm text-gray-400">
               {format(dateRange.from, 'MMM dd, yyyy')} - {format(dateRange.to, 'MMM dd, yyyy')}
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-2">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="border-slate-300">
+                <Button variant="outline" size="sm" className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-9 text-sm">
                   <CalendarIcon className="w-4 h-4 mr-2" />
-                  Date Range
+                  DATE RANGE
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
+              <PopoverContent className="w-auto p-0 bg-[#252525] border-[#3a3a3a]" align="end">
                 <div className="p-3 space-y-2">
                   <Button
                     variant="outline"
@@ -320,7 +315,7 @@ Answer the following question based on the data above. Be specific, include numb
                       from: subDays(new Date(), 7),
                       to: new Date()
                     })}
-                    className="w-full"
+                    className="w-full bg-transparent border-[#3a3a3a] text-white hover:bg-[#3a3a3a]"
                   >
                     Last 7 Days
                   </Button>
@@ -331,7 +326,7 @@ Answer the following question based on the data above. Be specific, include numb
                       from: subDays(new Date(), 30),
                       to: new Date()
                     })}
-                    className="w-full"
+                    className="w-full bg-transparent border-[#3a3a3a] text-white hover:bg-[#3a3a3a]"
                   >
                     Last 30 Days
                   </Button>
@@ -342,29 +337,29 @@ Answer the following question based on the data above. Be specific, include numb
                       from: subDays(new Date(), 90),
                       to: new Date()
                     })}
-                    className="w-full"
+                    className="w-full bg-transparent border-[#3a3a3a] text-white hover:bg-[#3a3a3a]"
                   >
                     Last 90 Days
                   </Button>
                 </div>
               </PopoverContent>
             </Popover>
-            <Button variant="outline" onClick={exportToCSV} className="border-slate-300">
+            <Button variant="outline" size="sm" onClick={exportToCSV} className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-9 text-sm">
               <Download className="w-4 h-4 mr-2" />
-              Export CSV
+              EXPORT CSV
             </Button>
-            <Button variant="outline" onClick={exportToPDF} className="border-slate-300">
+            <Button variant="outline" size="sm" onClick={exportToPDF} className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-9 text-sm">
               <FileText className="w-4 h-4 mr-2" />
-              Export PDF
+              EXPORT PDF
             </Button>
           </div>
         </div>
 
         {/* AI Question Interface */}
-        <Card className="border-slate-200 mb-8">
+        <Card className="bg-[#252525] border-[#3a3a3a] mb-6">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
+            <CardTitle className="text-lg flex items-center gap-2 text-white">
+              <MessageSquare className="w-5 h-5 text-[#e91e63]" />
               Ask About Your Data
             </CardTitle>
           </CardHeader>
@@ -376,13 +371,13 @@ Answer the following question based on the data above. Be specific, include numb
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleAskQuestion()}
-                  className="flex-1"
+                  className="flex-1 bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
                   disabled={isAsking}
                 />
                 <Button 
                   onClick={handleAskQuestion}
                   disabled={isAsking || !question.trim()}
-                  className="bg-teal-600 hover:bg-teal-700"
+                  className="bg-[#e91e63] hover:bg-[#d81b60]"
                 >
                   {isAsking ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -393,8 +388,8 @@ Answer the following question based on the data above. Be specific, include numb
               </div>
               
               {answer && (
-                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{answer}</p>
+                <div className="bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg p-4">
+                  <p className="text-sm text-gray-300 whitespace-pre-wrap">{answer}</p>
                 </div>
               )}
               
@@ -403,7 +398,7 @@ Answer the following question based on the data above. Be specific, include numb
                   variant="outline"
                   size="sm"
                   onClick={() => setQuestion("How many orders are currently in production?")}
-                  className="text-xs"
+                  className="text-xs bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
                 >
                   Orders in production?
                 </Button>
@@ -411,7 +406,7 @@ Answer the following question based on the data above. Be specific, include numb
                   variant="outline"
                   size="sm"
                   onClick={() => setQuestion("What products are low on stock?")}
-                  className="text-xs"
+                  className="text-xs bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
                 >
                   Low stock items?
                 </Button>
@@ -419,7 +414,7 @@ Answer the following question based on the data above. Be specific, include numb
                   variant="outline"
                   size="sm"
                   onClick={() => setQuestion("What are the top 5 most ordered products?")}
-                  className="text-xs"
+                  className="text-xs bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
                 >
                   Top products?
                 </Button>
@@ -427,7 +422,7 @@ Answer the following question based on the data above. Be specific, include numb
                   variant="outline"
                   size="sm"
                   onClick={() => setQuestion("How many rush priority orders do we have?")}
-                  className="text-xs"
+                  className="text-xs bg-transparent border-[#3a3a3a] text-gray-300 hover:bg-[#3a3a3a] hover:text-white"
                 >
                   Rush orders?
                 </Button>
@@ -442,74 +437,74 @@ Answer the following question based on the data above. Be specific, include numb
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="border-slate-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-xs font-medium text-gray-400 uppercase">
                 Orders/Day
               </CardTitle>
-              <TrendingUp className="w-4 h-4 text-teal-600" />
+              <TrendingUp className="w-4 h-4 text-teal-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{kpis.ordersPerDay}</div>
-              <p className="text-xs text-slate-500 mt-1">Average fulfillment rate</p>
+              <div className="text-2xl font-bold text-white">{kpis.ordersPerDay}</div>
+              <p className="text-xs text-gray-500 mt-1">Average fulfillment rate</p>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-xs font-medium text-gray-400 uppercase">
                 Avg Fulfillment Time
               </CardTitle>
-              <Clock className="w-4 h-4 text-blue-600" />
+              <Clock className="w-4 h-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{kpis.avgFulfillmentTime}</div>
-              <p className="text-xs text-slate-500 mt-1">Days from order to shipment</p>
+              <div className="text-2xl font-bold text-white">{kpis.avgFulfillmentTime}</div>
+              <p className="text-xs text-gray-500 mt-1">Days from order to shipment</p>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-xs font-medium text-gray-400 uppercase">
                 Items Produced
               </CardTitle>
-              <Package className="w-4 h-4 text-amber-600" />
+              <Package className="w-4 h-4 text-amber-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{kpis.totalItems}</div>
-              <p className="text-xs text-slate-500 mt-1">Total units in period</p>
+              <div className="text-2xl font-bold text-white">{kpis.totalItems}</div>
+              <p className="text-xs text-gray-500 mt-1">Total units in period</p>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-xs font-medium text-gray-400 uppercase">
                 Total Orders
               </CardTitle>
-              <CheckCircle className="w-4 h-4 text-green-600" />
+              <CheckCircle className="w-4 h-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{kpis.totalOrders}</div>
-              <p className="text-xs text-slate-500 mt-1">{kpis.totalShipments} shipments created</p>
+              <div className="text-2xl font-bold text-white">{kpis.totalOrders}</div>
+              <p className="text-xs text-gray-500 mt-1">{kpis.totalShipments} shipments created</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
           {/* Daily Orders Trend */}
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader>
-              <CardTitle className="text-lg">Daily Orders & Shipments</CardTitle>
+              <CardTitle className="text-sm font-semibold text-white uppercase">Daily Orders & Shipments</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={dailyOrdersData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#3a3a3a" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f1f1f', border: '1px solid #3a3a3a', color: '#fff' }} />
                   <Legend />
                   <Line type="monotone" dataKey="orders" stroke="#0ea5e9" name="Orders" strokeWidth={2} />
                   <Line type="monotone" dataKey="shipments" stroke="#10b981" name="Shipments" strokeWidth={2} />
@@ -519,12 +514,12 @@ Answer the following question based on the data above. Be specific, include numb
           </Card>
 
           {/* Order Status Distribution */}
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader>
-              <CardTitle className="text-lg">Order Status Distribution</CardTitle>
+              <CardTitle className="text-sm font-semibold text-white uppercase">Order Status Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
                     data={statusData}
@@ -540,24 +535,24 @@ Answer the following question based on the data above. Be specific, include numb
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f1f1f', border: '1px solid #3a3a3a', color: '#fff' }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           {/* Order Volume by Day */}
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader>
-              <CardTitle className="text-lg">Order Volume Trend</CardTitle>
+              <CardTitle className="text-sm font-semibold text-white uppercase">Order Volume Trend</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={dailyOrdersData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#3a3a3a" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f1f1f', border: '1px solid #3a3a3a', color: '#fff' }} />
                   <Legend />
                   <Bar dataKey="orders" fill="#0ea5e9" name="Orders" />
                 </BarChart>
@@ -566,12 +561,12 @@ Answer the following question based on the data above. Be specific, include numb
           </Card>
 
           {/* Priority Distribution */}
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader>
-              <CardTitle className="text-lg">Priority Distribution</CardTitle>
+              <CardTitle className="text-sm font-semibold text-white uppercase">Priority Distribution</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
                     data={priorityData}
@@ -587,7 +582,7 @@ Answer the following question based on the data above. Be specific, include numb
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f1f1f', border: '1px solid #3a3a3a', color: '#fff' }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
