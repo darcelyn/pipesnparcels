@@ -143,6 +143,27 @@ export default function Orders() {
     }
   });
 
+  const bulkUpdateStatusMutation = useMutation({
+    mutationFn: async ({ orderIds, status }) => {
+      const updates = orderIds.map(id => 
+        base44.entities.Order.update(id, { status })
+      );
+      return Promise.all(updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      setSelectedOrders([]);
+    }
+  });
+
+  const handleBulkStatusChange = (status) => {
+    if (selectedOrders.length === 0) return;
+    const statusLabel = status === 'production' ? 'Production' : status === 'hold' ? 'Hold' : status;
+    if (confirm(`Move ${selectedOrders.length} order(s) to ${statusLabel}?`)) {
+      bulkUpdateStatusMutation.mutate({ orderIds: selectedOrders, status });
+    }
+  };
+
   const { data: orders = [], isLoading, refetch, isFetching } = useQuery({
     queryKey: ['orders'],
     queryFn: () => base44.entities.Order.list('-created_date', 100)
@@ -291,6 +312,17 @@ export default function Orders() {
           </div>
 
           <div className="flex items-center gap-2">
+            {selectedOrders.length > 0 && (
+              <Select onValueChange={handleBulkStatusChange}>
+                <SelectTrigger className="w-48 bg-[#252525] border-[#3a3a3a] text-white h-9 text-sm">
+                  <SelectValue placeholder={`Move ${selectedOrders.length} order(s)`} />
+                </SelectTrigger>
+                <SelectContent className="bg-[#252525] border-[#3a3a3a]">
+                  <SelectItem value="production">Move to Production</SelectItem>
+                  <SelectItem value="hold">Put on Hold</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             <Button
               variant="outline"
               size="sm"
