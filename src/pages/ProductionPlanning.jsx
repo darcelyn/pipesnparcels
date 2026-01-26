@@ -143,24 +143,25 @@ export default function ProductionPlanning() {
 
   if (!isUnlocked) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+        <Card className="w-full max-w-md bg-[#252525] border-[#3a3a3a]">
           <CardHeader>
-            <CardTitle>Access Required</CardTitle>
+            <CardTitle className="text-white">Access Required</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div>
-                <Label>Enter Password</Label>
+                <Label className="text-gray-300">Enter Password</Label>
                 <Input
                   type="password"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
                   placeholder="Password"
                   autoFocus
+                  className="bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
                 />
               </div>
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full bg-[#e91e63] hover:bg-[#d81b60]">
                 Unlock
               </Button>
             </form>
@@ -172,125 +173,124 @@ export default function ProductionPlanning() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="flex items-center justify-center min-h-screen bg-[#1a1a1a]">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-[#1a1a1a]">
+      <div className="max-w-[1400px] mx-auto px-6 py-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-blue-700" />
-              </div>
-              Production Planning
-            </h1>
-            <p className="text-slate-500 mt-1">
+            <h1 className="text-2xl font-bold text-white mb-1">SYSTEM TOOLS</h1>
+            <p className="text-sm text-gray-400">
               Schedule, track, and optimize your production workflow
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Button 
               variant="outline" 
               onClick={() => setShowGuide(true)}
-              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+              size="sm"
+              className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-9 text-sm"
             >
               <HelpCircle className="w-4 h-4 mr-2" />
-              Guide
+              GUIDE
             </Button>
             <Button 
               variant="outline" 
               onClick={() => refetchTasks()}
-              className="border-slate-300"
+              size="sm"
+              className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-9 text-sm"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
+              REFRESH
             </Button>
             <Button
               variant="outline"
               onClick={() => autoScheduleMutation.mutate()}
               disabled={autoScheduleMutation.isPending}
-              className="border-blue-300 text-blue-700 hover:bg-blue-50"
+              size="sm"
+              className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-9 text-sm"
             >
               <TrendingUp className="w-4 h-4 mr-2" />
-              Auto-Schedule
+              AUTO-SCHEDULE
             </Button>
             <Button
               onClick={() => setShowScheduler(true)}
-              className="bg-blue-600 hover:bg-blue-700"
+              size="sm"
+              className="bg-[#e91e63] hover:bg-[#d81b60] h-9 text-sm"
             >
               <Plus className="w-4 h-4 mr-2" />
-              New Task
+              NEW TASK
             </Button>
           </div>
         </div>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-xs font-medium text-gray-400 uppercase">
                 Scheduled Today
               </CardTitle>
-              <Clock className="w-4 h-4 text-blue-600" />
+              <Clock className="w-4 h-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{kpis.scheduledToday}</div>
-              <p className="text-xs text-slate-500 mt-1">Tasks to start today</p>
+              <div className="text-2xl font-bold text-white">{kpis.scheduledToday}</div>
+              <p className="text-xs text-gray-500 mt-1">Tasks to start today</p>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-xs font-medium text-gray-400 uppercase">
                 In Progress
               </CardTitle>
-              <TrendingUp className="w-4 h-4 text-amber-600" />
+              <TrendingUp className="w-4 h-4 text-amber-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{kpis.inProgress}</div>
-              <p className="text-xs text-slate-500 mt-1">Currently active</p>
+              <div className="text-2xl font-bold text-white">{kpis.inProgress}</div>
+              <p className="text-xs text-gray-500 mt-1">Currently active</p>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-xs font-medium text-gray-400 uppercase">
                 Completed This Week
               </CardTitle>
-              <CheckCircle className="w-4 h-4 text-green-600" />
+              <CheckCircle className="w-4 h-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{kpis.completedThisWeek}</div>
-              <p className="text-xs text-slate-500 mt-1">Tasks finished</p>
+              <div className="text-2xl font-bold text-white">{kpis.completedThisWeek}</div>
+              <p className="text-xs text-gray-500 mt-1">Tasks finished</p>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">
+              <CardTitle className="text-xs font-medium text-gray-400 uppercase">
                 Blocked
               </CardTitle>
-              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <AlertTriangle className="w-4 h-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{kpis.blocked}</div>
-              <p className="text-xs text-slate-500 mt-1">Need attention</p>
+              <div className="text-2xl font-bold text-white">{kpis.blocked}</div>
+              <p className="text-xs text-gray-500 mt-1">Need attention</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="schedule">Schedule Timeline</TabsTrigger>
-            <TabsTrigger value="wip">Work in Progress</TabsTrigger>
-            <TabsTrigger value="forecast">Forecast</TabsTrigger>
+          <TabsList className="mb-6 bg-[#252525] border border-[#3a3a3a]">
+            <TabsTrigger value="schedule" className="data-[state=active]:bg-[#3a3a3a] data-[state=active]:text-white text-gray-400">Schedule Timeline</TabsTrigger>
+            <TabsTrigger value="wip" className="data-[state=active]:bg-[#3a3a3a] data-[state=active]:text-white text-gray-400">Work in Progress</TabsTrigger>
+            <TabsTrigger value="forecast" className="data-[state=active]:bg-[#3a3a3a] data-[state=active]:text-white text-gray-400">Forecast</TabsTrigger>
           </TabsList>
 
           <TabsContent value="schedule">
