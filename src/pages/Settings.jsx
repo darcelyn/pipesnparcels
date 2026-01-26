@@ -212,97 +212,97 @@ export default function Settings() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-          <p className="text-slate-500 mt-1">Configure your shipping preferences</p>
+    <div className="min-h-screen bg-[#1a1a1a]">
+      <div className="max-w-[1200px] mx-auto px-6 py-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white mb-1">SETTINGS</h1>
+          <p className="text-sm text-gray-400">Configure your shipping preferences</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6 bg-slate-100">
-            <TabsTrigger value="company">Company</TabsTrigger>
-            <TabsTrigger value="carriers">Carriers</TabsTrigger>
-            <TabsTrigger value="boxes">Box Presets</TabsTrigger>
-            <TabsTrigger value="packing">Packing Configs</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          <TabsList className="mb-6 bg-[#252525] border border-[#3a3a3a]">
+            <TabsTrigger value="company" className="data-[state=active]:bg-[#3a3a3a] data-[state=active]:text-white text-gray-400">Company</TabsTrigger>
+            <TabsTrigger value="carriers" className="data-[state=active]:bg-[#3a3a3a] data-[state=active]:text-white text-gray-400">Carriers</TabsTrigger>
+            <TabsTrigger value="boxes" className="data-[state=active]:bg-[#3a3a3a] data-[state=active]:text-white text-gray-400">Box Presets</TabsTrigger>
+            <TabsTrigger value="packing" className="data-[state=active]:bg-[#3a3a3a] data-[state=active]:text-white text-gray-400">Packing Configs</TabsTrigger>
+            <TabsTrigger value="preferences" className="data-[state=active]:bg-[#3a3a3a] data-[state=active]:text-white text-gray-400">Preferences</TabsTrigger>
           </TabsList>
 
           <TabsContent value="company">
-            <Card className="border-slate-200">
+            <Card className="bg-[#252525] border-[#3a3a3a]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-teal-600" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Building2 className="w-5 h-5 text-[#e91e63]" />
                   Return Address
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-gray-400">
                   This address will appear on all shipping labels
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Company Name</Label>
+                  <Label className="text-gray-300">Company Name</Label>
                   <Input
                     value={formData.return_address.company_name}
                     onChange={(e) => handleAddressChange('company_name', e.target.value)}
-                    className="mt-1"
+                    className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                   />
                 </div>
                 <div>
-                  <Label>Street Address</Label>
+                  <Label className="text-gray-300">Street Address</Label>
                   <Input
                     value={formData.return_address.street1}
                     onChange={(e) => handleAddressChange('street1', e.target.value)}
-                    className="mt-1"
+                    className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                   />
                 </div>
                 <div>
-                  <Label>Suite/Unit</Label>
+                  <Label className="text-gray-300">Suite/Unit</Label>
                   <Input
                     value={formData.return_address.street2}
                     onChange={(e) => handleAddressChange('street2', e.target.value)}
-                    className="mt-1"
+                    className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                   />
                 </div>
                 <div className="grid md:grid-cols-3 gap-4">
                   <div>
-                    <Label>City</Label>
+                    <Label className="text-gray-300">City</Label>
                     <Input
                       value={formData.return_address.city}
                       onChange={(e) => handleAddressChange('city', e.target.value)}
-                      className="mt-1"
+                      className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                     />
                   </div>
                   <div>
-                    <Label>State</Label>
+                    <Label className="text-gray-300">State</Label>
                     <Input
                       value={formData.return_address.state}
                       onChange={(e) => handleAddressChange('state', e.target.value)}
-                      className="mt-1"
+                      className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                     />
                   </div>
                   <div>
-                    <Label>ZIP Code</Label>
+                    <Label className="text-gray-300">ZIP Code</Label>
                     <Input
                       value={formData.return_address.zip}
                       onChange={(e) => handleAddressChange('zip', e.target.value)}
-                      className="mt-1"
+                      className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                     />
                   </div>
                 </div>
                 <div>
-                  <Label>Phone</Label>
+                  <Label className="text-gray-300">Phone</Label>
                   <Input
                     value={formData.return_address.phone}
                     onChange={(e) => handleAddressChange('phone', e.target.value)}
-                    className="mt-1"
+                    className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                   />
                 </div>
               </CardContent>
@@ -310,45 +310,45 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="carriers">
-            <div className="space-y-6">
-              <Card className="border-slate-200">
+            <div className="space-y-4">
+              <Card className="bg-[#252525] border-[#3a3a3a]">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Truck className="w-5 h-5 text-teal-600" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Truck className="w-5 h-5 text-[#e91e63]" />
                     FedEx Configuration
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label>Account Number</Label>
+                    <Label className="text-gray-300">Account Number</Label>
                     <Input
                       value={formData.fedex_account_number}
                       onChange={(e) => handleFieldChange('fedex_account_number', e.target.value)}
                       placeholder="Enter your FedEx account number"
-                      className="mt-1"
+                      className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
                     />
                   </div>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-gray-500">
                     FedEx API credentials are configured in the backend settings
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="border-slate-200">
+              <Card className="bg-[#252525] border-[#3a3a3a]">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Truck className="w-5 h-5 text-teal-600" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Truck className="w-5 h-5 text-[#e91e63]" />
                     USPS Configuration
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label>Account ID</Label>
+                    <Label className="text-gray-300">Account ID</Label>
                     <Input
                       value={formData.usps_account_id}
                       onChange={(e) => handleFieldChange('usps_account_id', e.target.value)}
                       placeholder="Enter your USPS/Stamps.com account ID"
-                      className="mt-1"
+                      className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
                     />
                   </div>
                 </CardContent>
@@ -358,13 +358,13 @@ export default function Settings() {
 
           <TabsContent value="boxes">
             <div className="space-y-6">
-              <Card className="border-slate-200">
+              <Card className="bg-[#252525] border-[#3a3a3a]">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Box className="w-5 h-5 text-teal-600" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Box className="w-5 h-5 text-[#e91e63]" />
                     Box Presets
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-gray-400">
                     Manage your box sizes for quick selection
                   </CardDescription>
                 </CardHeader>
@@ -373,11 +373,11 @@ export default function Settings() {
                     {boxes.map((box) => (
                       <div 
                         key={box.id}
-                        className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg"
                       >
                         <div>
-                          <p className="font-medium text-slate-900">{box.name}</p>
-                          <p className="text-sm text-slate-500">
+                          <p className="font-medium text-white">{box.name}</p>
+                          <p className="text-sm text-gray-400">
                             {box.length}" × {box.width}" × {box.height}"
                             {box.best_for && ` • ${box.best_for}`}
                           </p>
@@ -387,7 +387,7 @@ export default function Settings() {
                             variant="ghost" 
                             size="icon"
                             onClick={() => deleteBoxMutation.mutate(box.id)}
-                            className="text-slate-400 hover:text-red-500"
+                            className="text-gray-400 hover:text-red-500 hover:bg-[#3a3a3a]"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -396,62 +396,62 @@ export default function Settings() {
                     ))}
                   </div>
 
-                  <div className="mt-6 pt-6 border-t">
-                    <h4 className="font-medium text-slate-900 mb-4">Add New Box</h4>
+                  <div className="mt-6 pt-6 border-t border-[#3a3a3a]">
+                    <h4 className="font-medium text-white mb-4">Add New Box</h4>
                     <div className="space-y-4">
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <Label>Box Name</Label>
+                          <Label className="text-gray-300">Box Name</Label>
                           <Input
                             value={newBox.name}
                             onChange={(e) => setNewBox(prev => ({ ...prev, name: e.target.value }))}
                             placeholder="My Custom Box"
-                            className="mt-1"
+                            className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
                           />
                         </div>
                         <div>
-                          <Label>Best For</Label>
+                          <Label className="text-gray-300">Best For</Label>
                           <Input
                             value={newBox.best_for}
                             onChange={(e) => setNewBox(prev => ({ ...prev, best_for: e.target.value }))}
                             placeholder="e.g., Small parts"
-                            className="mt-1"
+                            className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
                           />
                         </div>
                       </div>
                       <div className="grid grid-cols-3 gap-4">
                         <div>
-                          <Label>Length (in)</Label>
+                          <Label className="text-gray-300">Length (in)</Label>
                           <Input
                             type="number"
                             value={newBox.length}
                             onChange={(e) => setNewBox(prev => ({ ...prev, length: e.target.value }))}
-                            className="mt-1"
+                            className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                           />
                         </div>
                         <div>
-                          <Label>Width (in)</Label>
+                          <Label className="text-gray-300">Width (in)</Label>
                           <Input
                             type="number"
                             value={newBox.width}
                             onChange={(e) => setNewBox(prev => ({ ...prev, width: e.target.value }))}
-                            className="mt-1"
+                            className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                           />
                         </div>
                         <div>
-                          <Label>Height (in)</Label>
+                          <Label className="text-gray-300">Height (in)</Label>
                           <Input
                             type="number"
                             value={newBox.height}
                             onChange={(e) => setNewBox(prev => ({ ...prev, height: e.target.value }))}
-                            className="mt-1"
+                            className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                           />
                         </div>
                       </div>
                       <Button 
                         onClick={handleAddBox}
                         disabled={createBoxMutation.isPending}
-                        className="bg-teal-600 hover:bg-teal-700"
+                        className="bg-[#e91e63] hover:bg-[#d81b60]"
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Box
@@ -464,13 +464,13 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="packing">
-            <Card className="border-slate-200">
+            <Card className="bg-[#252525] border-[#3a3a3a]">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-teal-600" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Package className="w-5 h-5 text-[#e91e63]" />
                   Packing Configurations
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-gray-400">
                   Define what components are included with each SKU/part number
                 </CardDescription>
               </CardHeader>
@@ -479,31 +479,31 @@ export default function Settings() {
                   {packingConfigs.map((config) => (
                     <div 
                       key={config.id}
-                      className="p-4 bg-slate-50 rounded-lg border border-slate-200"
+                      className="p-4 bg-[#1f1f1f] rounded-lg border border-[#3a3a3a]"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <p className="font-semibold text-slate-900">{config.sku}</p>
+                          <p className="font-semibold text-white">{config.sku}</p>
                           {config.product_name && (
-                            <p className="text-sm text-slate-600">{config.product_name}</p>
+                            <p className="text-sm text-gray-400">{config.product_name}</p>
                           )}
                         </div>
                         <Button 
                           variant="ghost" 
                           size="icon"
                           onClick={() => deletePackingConfigMutation.mutate(config.id)}
-                          className="text-slate-400 hover:text-red-500"
+                          className="text-gray-400 hover:text-red-500 hover:bg-[#3a3a3a]"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                       <div className="mt-2">
-                        <p className="text-xs font-medium text-slate-500 mb-1">Components:</p>
+                        <p className="text-xs font-medium text-gray-500 mb-1">Components:</p>
                         <div className="flex flex-wrap gap-1">
                           {config.components?.map((component, idx) => (
                             <span 
                               key={idx}
-                              className="inline-block bg-teal-100 text-teal-900 px-2 py-0.5 rounded text-xs"
+                              className="inline-block bg-teal-500/20 text-teal-300 border border-teal-500/30 px-2 py-0.5 rounded text-xs"
                             >
                               {component}
                             </span>
@@ -511,38 +511,38 @@ export default function Settings() {
                         </div>
                       </div>
                       {config.notes && (
-                        <p className="text-sm text-slate-600 mt-2 italic">{config.notes}</p>
+                        <p className="text-sm text-gray-400 mt-2 italic">{config.notes}</p>
                       )}
                     </div>
                   ))}
                 </div>
 
-                <div className="pt-6 border-t">
-                  <h4 className="font-medium text-slate-900 mb-4">Add New Packing Configuration</h4>
+                <div className="pt-6 border-t border-[#3a3a3a]">
+                  <h4 className="font-medium text-white mb-4">Add New Packing Configuration</h4>
                   <div className="space-y-4">
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
-                        <Label>SKU / Part Number *</Label>
+                        <Label className="text-gray-300">SKU / Part Number *</Label>
                         <Input
                           value={newPackingConfig.sku}
                           onChange={(e) => setNewPackingConfig(prev => ({ ...prev, sku: e.target.value }))}
                           placeholder="ABC-123"
-                          className="mt-1"
+                          className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
                         />
                       </div>
                       <div>
-                        <Label>Product Name</Label>
+                        <Label className="text-gray-300">Product Name</Label>
                         <Input
                           value={newPackingConfig.product_name}
                           onChange={(e) => setNewPackingConfig(prev => ({ ...prev, product_name: e.target.value }))}
                           placeholder="Optional product name"
-                          className="mt-1"
+                          className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <Label>Components *</Label>
+                      <Label className="text-gray-300">Components *</Label>
                       <div className="flex gap-2 mt-1">
                         <Input
                           value={componentInput}
@@ -554,11 +554,13 @@ export default function Settings() {
                             }
                           }}
                           placeholder="e.g., CAN, HEADER HARDWARE KIT, BOLT"
+                          className="bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
                         />
                         <Button 
                           onClick={handleAddComponent}
                           variant="outline"
                           type="button"
+                          className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#3a3a3a]"
                         >
                           <Plus className="w-4 h-4" />
                         </Button>
@@ -568,12 +570,12 @@ export default function Settings() {
                           {newPackingConfig.components.map((component, idx) => (
                             <span 
                               key={idx}
-                              className="inline-flex items-center gap-1 bg-teal-100 text-teal-900 px-3 py-1 rounded-full text-sm"
+                              className="inline-flex items-center gap-1 bg-teal-500/20 text-teal-300 border border-teal-500/30 px-3 py-1 rounded-full text-sm"
                             >
                               {component}
                               <button
                                 onClick={() => handleRemoveComponent(idx)}
-                                className="hover:text-red-600"
+                                className="hover:text-red-400"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -584,12 +586,12 @@ export default function Settings() {
                     </div>
 
                     <div>
-                      <Label>Notes</Label>
+                      <Label className="text-gray-300">Notes</Label>
                       <Textarea
                         value={newPackingConfig.notes}
                         onChange={(e) => setNewPackingConfig(prev => ({ ...prev, notes: e.target.value }))}
                         placeholder="Any special packing instructions..."
-                        className="mt-1"
+                        className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
                         rows={3}
                       />
                     </div>
@@ -597,7 +599,7 @@ export default function Settings() {
                     <Button 
                       onClick={handleAddPackingConfig}
                       disabled={createPackingConfigMutation.isPending || !newPackingConfig.sku || newPackingConfig.components.length === 0}
-                      className="bg-teal-600 hover:bg-teal-700"
+                      className="bg-[#e91e63] hover:bg-[#d81b60]"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Add Configuration
@@ -609,39 +611,39 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="preferences">
-            <div className="space-y-6">
-              <Card className="border-slate-200">
+            <div className="space-y-4">
+              <Card className="bg-[#252525] border-[#3a3a3a]">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="w-5 h-5 text-teal-600" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Package className="w-5 h-5 text-[#e91e63]" />
                     Magento Integration
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="magento_store_url">Magento Store URL</Label>
+                    <Label htmlFor="magento_store_url" className="text-gray-300">Magento Store URL</Label>
                     <Input
                       id="magento_store_url"
                       value={formData.magento_store_url || ''}
                       onChange={(e) => handleFieldChange('magento_store_url', e.target.value)}
                       placeholder="https://your-store.com"
-                      className="mt-1"
+                      className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
                     />
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       Your Magento store base URL (e.g., https://example.com)
                     </p>
                   </div>
                   <div>
-                    <Label>API Credentials</Label>
-                    <p className="text-sm text-slate-500 mb-2">
+                    <Label className="text-gray-300">API Credentials</Label>
+                    <p className="text-sm text-gray-500 mb-2">
                       Configure your Magento API key in the app secrets (magento_api_key)
                     </p>
                   </div>
-                  <div className="border-t pt-4">
+                  <div className="border-t border-[#3a3a3a] pt-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <Label htmlFor="two_way_sync">Two-Way Sync</Label>
-                        <p className="text-sm text-slate-500">
+                        <Label htmlFor="two_way_sync" className="text-gray-300">Two-Way Sync</Label>
+                        <p className="text-sm text-gray-500">
                           Automatically update Magento when orders are modified here
                         </p>
                       </div>
@@ -652,8 +654,8 @@ export default function Settings() {
                       />
                     </div>
                     {formData.magento_two_way_sync && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
-                        <p className="text-sm text-blue-800">
+                      <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mt-3">
+                        <p className="text-sm text-blue-300">
                           <strong>Two-way sync enabled:</strong> Order status changes and tracking info will automatically sync back to Magento.
                         </p>
                       </div>
@@ -662,25 +664,25 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              <Card className="border-slate-200">
+              <Card className="bg-[#252525] border-[#3a3a3a]">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <SettingsIcon className="w-5 h-5 text-teal-600" />
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <SettingsIcon className="w-5 h-5 text-[#e91e63]" />
                     Shipping Preferences
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <Label>Default Carrier Selection</Label>
+                    <Label className="text-gray-300">Default Carrier Selection</Label>
                     <Select 
                       value={formData.default_carrier}
                       onValueChange={(value) => handleFieldChange('default_carrier', value)}
                     >
-                      <SelectTrigger className="mt-1">
+                      <SelectTrigger className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-[#252525] border-[#3a3a3a]">
                         <SelectItem value="cheapest">Always Cheapest</SelectItem>
                         <SelectItem value="fastest">Always Fastest</SelectItem>
                         <SelectItem value="fedex">Prefer FedEx</SelectItem>
@@ -690,15 +692,15 @@ export default function Settings() {
                   </div>
                   
                   <div>
-                    <Label>Default Label Format</Label>
+                    <Label className="text-gray-300">Default Label Format</Label>
                     <Select 
                       value={formData.default_label_format}
                       onValueChange={(value) => handleFieldChange('default_label_format', value)}
                     >
-                      <SelectTrigger className="mt-1">
+                      <SelectTrigger className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-[#252525] border-[#3a3a3a]">
                         <SelectItem value="zpl">ZPL (Thermal)</SelectItem>
                         <SelectItem value="pdf">PDF</SelectItem>
                         <SelectItem value="png">PNG Image</SelectItem>
@@ -707,10 +709,10 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg">
                   <div>
-                    <p className="font-medium text-slate-900">Auto-print labels</p>
-                    <p className="text-sm text-slate-500">Print labels immediately after creation</p>
+                    <p className="font-medium text-white">Auto-print labels</p>
+                    <p className="text-sm text-gray-500">Print labels immediately after creation</p>
                   </div>
                   <Switch 
                     checked={formData.auto_print_labels}
@@ -718,10 +720,10 @@ export default function Settings() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg">
                   <div>
-                    <p className="font-medium text-slate-900">Send tracking emails</p>
-                    <p className="text-sm text-slate-500">Email customers when label is created</p>
+                    <p className="font-medium text-white">Send tracking emails</p>
+                    <p className="text-sm text-gray-500">Email customers when label is created</p>
                   </div>
                   <Switch 
                     checked={formData.send_tracking_emails}
@@ -730,15 +732,15 @@ export default function Settings() {
                 </div>
 
                 <div>
-                  <Label>Shipping Markup (%)</Label>
+                  <Label className="text-gray-300">Shipping Markup (%)</Label>
                   <Input
                     type="number"
                     min="0"
                     value={formData.markup_percentage}
                     onChange={(e) => handleFieldChange('markup_percentage', parseFloat(e.target.value) || 0)}
-                    className="mt-1 w-32"
+                    className="mt-1 w-32 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                   />
-                  <p className="text-sm text-slate-500 mt-1">
+                  <p className="text-sm text-gray-500 mt-1">
                     Add a percentage to displayed shipping costs
                   </p>
                 </div>
@@ -752,7 +754,7 @@ export default function Settings() {
           <Button 
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-teal-600 hover:bg-teal-700"
+            className="bg-[#e91e63] hover:bg-[#d81b60]"
           >
             {isSaving ? (
               <>
