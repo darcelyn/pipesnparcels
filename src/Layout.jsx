@@ -39,7 +39,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Production', page: 'Production', icon: Package },
     { name: 'Staging', page: 'Staging', icon: Package },
     { name: 'Ready to Ship', page: 'ReadyToShip', icon: Truck },
-    { name: 'Shipments', page: 'Shipments', icon: Truck },
+    { name: 'Tracking', page: 'Shipments', icon: Truck },
     { name: 'Reports', page: 'Reports', icon: LayoutDashboard },
     { name: 'Settings', page: 'Settings', icon: Settings },
     { name: 'System Tools', page: 'ProductionPlanning', icon: Settings },
