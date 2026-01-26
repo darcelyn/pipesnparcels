@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,7 +31,9 @@ import {
   Calendar as CalendarIcon,
   Download,
   FileText,
-  Loader2
+  Loader2,
+  MessageSquare,
+  Send
 } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay, differenceInDays, parseISO } from 'date-fns';
 
@@ -40,6 +43,9 @@ export default function Reports() {
     to: new Date()
   });
   const [reportType, setReportType] = useState('overview');
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [isAsking, setIsAsking] = useState(false);
 
   const { data: orders = [], isLoading: ordersLoading } = useQuery({
     queryKey: ['all-orders'],
@@ -49,6 +55,11 @@ export default function Reports() {
   const { data: shipments = [], isLoading: shipmentsLoading } = useQuery({
     queryKey: ['all-shipments'],
     queryFn: () => base44.entities.Shipment.list()
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ['all-products'],
+    queryFn: () => base44.entities.Product.list('sku', 500)
   });
 
   const isLoading = ordersLoading || shipmentsLoading;
@@ -210,6 +221,64 @@ export default function Reports() {
     window.print();
   };
 
+  // Ask a question about the data
+  const handleAskQuestion = async () => {
+    if (!question.trim()) return;
+    
+    setIsAsking(true);
+    setAnswer('');
+    
+    try {
+      // Prepare data context for the LLM
+      const orderSummary = orders.map(o => ({
+        order_number: o.order_number,
+        status: o.status,
+        priority: o.priority,
+        customer: o.customer_name,
+        items: o.items?.map(i => ({
+          sku: i.sku,
+          name: i.name,
+          quantity: i.quantity
+        }))
+      }));
+
+      const productSummary = products.map(p => ({
+        sku: p.sku,
+        name: p.name,
+        category: p.category,
+        stock_quantity: p.stock_quantity,
+        status: p.status
+      }));
+
+      const context = `
+You are analyzing data for a manufacturing and shipping business.
+
+ORDERS DATA (${orders.length} total orders):
+${JSON.stringify(orderSummary, null, 2)}
+
+PRODUCTS DATA (${products.length} total products):
+${JSON.stringify(productSummary, null, 2)}
+
+SHIPMENTS COUNT: ${shipments.length}
+
+Current date: ${format(new Date(), 'MMM dd, yyyy')}
+
+Answer the following question based on the data above. Be specific, include numbers, and be concise.
+`;
+
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: context + "\n\nQUESTION: " + question,
+        add_context_from_internet: false
+      });
+      
+      setAnswer(response);
+    } catch (error) {
+      setAnswer('Sorry, I encountered an error processing your question. Please try again.');
+    } finally {
+      setIsAsking(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -290,6 +359,82 @@ export default function Reports() {
             </Button>
           </div>
         </div>
+
+        {/* AI Question Interface */}
+        <Card className="border-slate-200 mb-8">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <MessageSquare className="w-5 h-5" />
+              Ask About Your Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  placeholder='e.g., "How many CBR600 systems are currently on order?"'
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAskQuestion()}
+                  className="flex-1"
+                  disabled={isAsking}
+                />
+                <Button 
+                  onClick={handleAskQuestion}
+                  disabled={isAsking || !question.trim()}
+                  className="bg-teal-600 hover:bg-teal-700"
+                >
+                  {isAsking ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+              
+              {answer && (
+                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{answer}</p>
+                </div>
+              )}
+              
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setQuestion("How many orders are currently in production?")}
+                  className="text-xs"
+                >
+                  Orders in production?
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setQuestion("What products are low on stock?")}
+                  className="text-xs"
+                >
+                  Low stock items?
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setQuestion("What are the top 5 most ordered products?")}
+                  className="text-xs"
+                >
+                  Top products?
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setQuestion("How many rush priority orders do we have?")}
+                  className="text-xs"
+                >
+                  Rush orders?
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* AI Insights */}
         <div className="mb-8">
