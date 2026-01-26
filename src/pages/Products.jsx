@@ -1,419 +1,504 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Package, 
-  RefreshCw, 
-  Search,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-  DollarSign,
-  Box,
-  ChevronDown,
-  Edit,
-  X
-} from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { format } from "date-fns";
+import { 
+  RefreshCw,
+  Search,
+  ChevronRight,
+  MoreVertical,
+  Plus,
+  X,
+  Package
+} from "lucide-react";
 
 export default function Products() {
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [syncStatus, setSyncStatus] = useState(null);
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [expandedProducts, setExpandedProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [editForm, setEditForm] = useState({ weight: '', box_type: '', category: '' });
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showSpecDialog, setShowSpecDialog] = useState(false);
+  const [specData, setSpecData] = useState({
+    components: [],
+    packing_notes: '',
+    related_items: []
+  });
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: products = [], isLoading, refetch, isFetching } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list('-last_synced')
+    queryFn: () => base44.entities.Product.list('sku', 500)
   });
 
-  const updateProductMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Product.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      setEditingProduct(null);
-      setEditForm({ weight: '', box_type: '' });
-    }
-  });
-
-  const syncProductsMutation = useMutation({
-    mutationFn: async ({ incremental = true }) => {
-      setSyncStatus('syncing');
-      const response = await base44.functions.invoke('fetchMagentoProducts', { incremental });
+  const syncMutation = useMutation({
+    mutationFn: async (type) => {
+      const response = await base44.functions.invoke('fetchMagentoProducts', { 
+        sync_type: type 
+      });
       return response.data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      setSyncStatus({
-        type: 'success',
-        message: `${data.sync_type === 'incremental' ? 'Incremental' : 'Full'} sync: ${data.new_count} new, ${data.updated_count} updated`
-      });
-      setTimeout(() => setSyncStatus(null), 5000);
+      alert(`Sync complete: ${data.created_count} new, ${data.updated_count} updated`);
     },
     onError: (error) => {
-      setSyncStatus({ type: 'error', message: error.message });
-      setTimeout(() => setSyncStatus(null), 5000);
+      alert(`Sync failed: ${error.message}`);
     }
   });
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      return base44.entities.Product.update(id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setShowSpecDialog(false);
+      setEditingProduct(null);
+    }
   });
 
-  const categories = ['Pipes', 'Fittings', 'Valves', 'Tools', 'Accessories', 'Other'];
-  const productsByCategory = categories.reduce((acc, category) => {
-    acc[category] = filteredProducts.filter(p => p.category === category);
-    return acc;
-  }, {});
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      const matchesSearch = !search || 
+        p.sku?.toLowerCase().includes(search.toLowerCase()) ||
+        p.name?.toLowerCase().includes(search.toLowerCase());
+      const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, search, categoryFilter]);
 
-  const totalValue = products.reduce((sum, p) => sum + (p.price * p.stock_quantity), 0);
-  const lowStockCount = products.filter(p => p.stock_quantity < 10).length;
+  const toggleExpand = (productId) => {
+    setExpandedProducts(prev =>
+      prev.includes(productId)
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
-  const handleEditProduct = (product) => {
+  const openSpecDialog = (product) => {
     setEditingProduct(product);
-    setEditForm({
-      weight: product.weight || '',
-      box_type: product.box_type || '',
-      category: product.category || 'Other'
+    setSpecData({
+      components: product.components || [],
+      packing_notes: product.packing_notes || '',
+      related_items: product.related_items || []
+    });
+    setShowSpecDialog(true);
+  };
+
+  const addComponent = () => {
+    setSpecData(prev => ({
+      ...prev,
+      components: [...prev.components, { name: '', quantity: 1, notes: '' }]
+    }));
+  };
+
+  const updateComponent = (index, field, value) => {
+    setSpecData(prev => ({
+      ...prev,
+      components: prev.components.map((comp, i) => 
+        i === index ? { ...comp, [field]: value } : comp
+      )
+    }));
+  };
+
+  const removeComponent = (index) => {
+    setSpecData(prev => ({
+      ...prev,
+      components: prev.components.filter((_, i) => i !== index)
+    }));
+  };
+
+  const saveSpecSheet = () => {
+    if (!editingProduct) return;
+    updateProductMutation.mutate({
+      id: editingProduct.id,
+      data: specData
     });
   };
 
-  const handleSaveEdit = () => {
-    if (editingProduct) {
-      updateProductMutation.mutate({
-        id: editingProduct.id,
-        data: {
-          weight: parseFloat(editForm.weight) || 0,
-          box_type: editForm.box_type,
-          category: editForm.category
-        }
-      });
-    }
+  const getCategoryColor = (category) => {
+    const colors = {
+      'Pipes': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+      'Fittings': 'bg-green-500/20 text-green-300 border-green-500/30',
+      'Valves': 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+      'Tools': 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+      'Accessories': 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+      'Other': 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+    };
+    return colors[category] || colors['Other'];
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-[#1a1a1a]">
+      <div className="max-w-[1600px] mx-auto px-6 py-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Products</h1>
-            <p className="text-slate-500 mt-1">Manage inventory synced from Magento</p>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                disabled={syncProductsMutation.isPending}
-                className="bg-teal-600 hover:bg-teal-700"
-              >
-                {syncProductsMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Syncing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Sync from Magento
-                    <ChevronDown className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => syncProductsMutation.mutate({ incremental: true })}>
-                Quick Sync (Updates Only)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => syncProductsMutation.mutate({ incremental: false })}>
-                Full Sync (All Products)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white mb-1">PRODUCTS</h1>
+          <p className="text-sm text-gray-400">Manage product catalog and spec sheets</p>
         </div>
 
-        {/* Sync Status */}
-        {syncStatus?.type === 'success' && (
-          <Card className="mb-6 border-green-200 bg-green-50">
-            <CardContent className="p-4 flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-              <p className="text-green-800 font-medium">{syncStatus.message}</p>
-            </CardContent>
-          </Card>
-        )}
+        {/* Controls Bar */}
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div className="flex-1 flex items-center gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Input
+                placeholder="Search products by SKU or name..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 bg-[#252525] border-[#3a3a3a] text-white placeholder:text-gray-500 h-9 text-sm"
+              />
+            </div>
+            
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-40 bg-[#252525] border-[#3a3a3a] text-white h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#252525] border-[#3a3a3a]">
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="Pipes">Pipes</SelectItem>
+                <SelectItem value="Fittings">Fittings</SelectItem>
+                <SelectItem value="Valves">Valves</SelectItem>
+                <SelectItem value="Tools">Tools</SelectItem>
+                <SelectItem value="Accessories">Accessories</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {syncStatus?.type === 'error' && (
-          <Card className="mb-6 border-red-200 bg-red-50">
-            <CardContent className="p-4 flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600" />
-              <p className="text-red-800 font-medium">Failed to sync: {syncStatus.message}</p>
-            </CardContent>
-          </Card>
-        )}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-9 text-sm"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+              REFRESH
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => syncMutation.mutate('incremental')}
+              disabled={syncMutation.isPending}
+              className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-9 text-sm"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${syncMutation.isPending ? 'animate-spin' : ''}`} />
+              SYNC MAGENTO
+            </Button>
+          </div>
+        </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
-          <Card className="border-slate-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Total Products</p>
-                  <p className="text-3xl font-bold text-slate-900 mt-1">{products.length}</p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-slate-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Inventory Value</p>
-                  <p className="text-3xl font-bold text-slate-900 mt-1">${totalValue.toFixed(0)}</p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-slate-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-500">Low Stock Items</p>
-                  <p className="text-3xl font-bold text-slate-900 mt-1">{lowStockCount}</p>
-                </div>
-                <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                  <Box className="w-6 h-6 text-amber-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="bg-[#252525] border border-[#3a3a3a] rounded-lg p-4">
+            <div className="text-gray-400 text-xs uppercase mb-1">Total Products</div>
+            <div className="text-white text-2xl font-bold">{filteredProducts.length}</div>
+          </div>
+          <div className="bg-[#252525] border border-[#3a3a3a] rounded-lg p-4">
+            <div className="text-gray-400 text-xs uppercase mb-1">With Spec Sheets</div>
+            <div className="text-white text-2xl font-bold">
+              {filteredProducts.filter(p => p.components?.length > 0).length}
+            </div>
+          </div>
+          <div className="bg-[#252525] border border-[#3a3a3a] rounded-lg p-4">
+            <div className="text-gray-400 text-xs uppercase mb-1">Low Stock</div>
+            <div className="text-white text-2xl font-bold">
+              {filteredProducts.filter(p => (p.stock_quantity || 0) < 10).length}
+            </div>
+          </div>
+          <div className="bg-[#252525] border border-[#3a3a3a] rounded-lg p-4">
+            <div className="text-gray-400 text-xs uppercase mb-1">Disabled</div>
+            <div className="text-white text-2xl font-bold">
+              {filteredProducts.filter(p => p.status === 'disabled').length}
+            </div>
+          </div>
         </div>
 
-        {/* Search & Filter */}
-        <Card className="mb-6 border-slate-200">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <Input
-                  placeholder="Search by name or SKU..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* Table */}
+        <div className="bg-[#252525] rounded-lg border border-[#3a3a3a] overflow-hidden">
+          {/* Table Header */}
+          <div className="bg-[#2d2d4a] border-b border-[#3a3a3a]">
+            <div className="grid grid-cols-[40px_140px_1fr_140px_100px_100px_100px_100px_40px] gap-4 px-4 py-3 text-xs font-medium text-gray-400 uppercase">
+              <div></div>
+              <div>SKU</div>
+              <div>NAME</div>
+              <div>CATEGORY</div>
+              <div>PRICE</div>
+              <div>STOCK</div>
+              <div>WEIGHT</div>
+              <div>STATUS</div>
+              <div></div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Products List */}
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
           </div>
-        ) : filteredProducts.length === 0 ? (
-          <Card className="border-slate-200">
-            <CardContent className="p-12 text-center">
-              <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                {products.length === 0 ? 'No Products Yet' : 'No Results Found'}
-              </h3>
-              <p className="text-slate-500 mb-6">
-                {products.length === 0 
-                  ? 'Click "Sync from Magento" to import your products'
-                  : 'Try adjusting your search terms'
-                }
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-8">
-            {categories.map(category => {
-              const categoryProducts = productsByCategory[category] || [];
-              if (categoryProducts.length === 0) return null;
-              
-              return (
-                <div key={category}>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-3">
-                    {category}
-                    <Badge variant="outline" className="text-sm">{categoryProducts.length}</Badge>
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {categoryProducts.map((product) => (
-                      <Card key={product.id} className="border-slate-200 hover:shadow-lg transition-all hover:-translate-y-1">
-                        <CardContent className="p-5">
-                          <div className="flex items-start justify-between mb-3">
-                            <Badge 
-                              className={product.status === 'enabled' 
-                                ? 'bg-green-100 text-green-700' 
-                                : 'bg-slate-100 text-slate-600'
-                              }
-                            >
-                              {product.status}
-                            </Badge>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEditProduct(product)}
-                              className="h-7 w-7 -mt-1 -mr-1"
-                            >
-                              <Edit className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
 
-                          <h3 className="font-semibold text-slate-900 mb-1 line-clamp-2 min-h-[2.5rem]">
-                            {product.name}
-                          </h3>
-                          <p className="text-xs text-slate-500 mb-3">SKU: {product.sku}</p>
-
-                          {product.description && (
-                            <p className="text-xs text-slate-600 line-clamp-2 mb-3">
-                              {product.description.replace(/<[^>]*>/g, '')}
-                            </p>
+          {/* Table Body */}
+          <div className="divide-y divide-[#3a3a3a]">
+            {isLoading ? (
+              <div className="py-20 text-center text-gray-500">Loading...</div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="py-20 text-center text-gray-500">No products found</div>
+            ) : (
+              filteredProducts.map((product) => (
+                <div key={product.id}>
+                  <div className="grid grid-cols-[40px_140px_1fr_140px_100px_100px_100px_100px_40px] gap-4 px-4 py-3 text-sm items-center hover:bg-[#2a2a2a] transition-colors">
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => toggleExpand(product.id)}
+                        className="hover:bg-[#3a3a3a] p-1 rounded"
+                      >
+                        <ChevronRight
+                          className={`w-4 h-4 text-gray-400 transition-transform ${
+                            expandedProducts.includes(product.id) ? 'rotate-90' : ''
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    
+                    <div className="text-white font-medium font-mono text-xs">
+                      {product.sku}
+                    </div>
+                    
+                    <div className="text-white">{product.name}</div>
+                    
+                    <div>
+                      <Badge className={`${getCategoryColor(product.category)} border text-xs px-2 py-0.5`}>
+                        {product.category}
+                      </Badge>
+                    </div>
+                    
+                    <div className="text-gray-300">
+                      ${product.price?.toFixed(2) || '0.00'}
+                    </div>
+                    
+                    <div className={`${(product.stock_quantity || 0) < 10 ? 'text-red-400' : 'text-gray-300'}`}>
+                      {product.stock_quantity || 0}
+                    </div>
+                    
+                    <div className="text-gray-300">
+                      {product.weight || 0} lbs
+                    </div>
+                    
+                    <div>
+                      <Badge className={`${product.status === 'enabled' ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-gray-500/20 text-gray-300 border-gray-500/30'} border text-xs px-2 py-0.5`}>
+                        {product.status}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex justify-end">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white hover:bg-[#3a3a3a]">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-[#252525] border-[#3a3a3a]">
+                          <DropdownMenuItem
+                            onClick={() => openSpecDialog(product)}
+                            className="text-white hover:bg-[#3a3a3a]"
+                          >
+                            <Package className="w-4 h-4 mr-2" />
+                            Edit Spec Sheet
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => updateProductMutation.mutate({
+                              id: product.id,
+                              data: { status: product.status === 'enabled' ? 'disabled' : 'enabled' }
+                            })}
+                            className="text-white hover:bg-[#3a3a3a]"
+                          >
+                            {product.status === 'enabled' ? 'Disable' : 'Enable'} Product
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                  
+                  {/* Expanded Details */}
+                  {expandedProducts.includes(product.id) && (
+                    <div className="bg-[#1f1f1f] border-t border-[#3a3a3a] px-4 py-4">
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-400 mb-3 uppercase">Components</h4>
+                          {product.components && product.components.length > 0 ? (
+                            <div className="space-y-2">
+                              {product.components.map((comp, idx) => (
+                                <div key={idx} className="text-sm">
+                                  <div className="text-white flex items-center gap-2">
+                                    <span className="text-gray-400">•</span>
+                                    {comp.name} <span className="text-gray-500">(x{comp.quantity})</span>
+                                  </div>
+                                  {comp.notes && (
+                                    <div className="text-gray-400 text-xs ml-4 italic">"{comp.notes}"</div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-gray-500 text-sm italic">No components defined</div>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-400 mb-3 uppercase">Packing Notes</h4>
+                          {product.packing_notes ? (
+                            <div className="bg-orange-500/10 border border-orange-500/30 rounded p-3 text-orange-300 text-sm">
+                              ⚠️ {product.packing_notes}
+                            </div>
+                          ) : (
+                            <div className="text-gray-500 text-sm italic">No packing notes</div>
                           )}
 
-                          <div className="space-y-2 pt-3 border-t border-slate-100">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-slate-500">Price</span>
-                              <span className="font-bold text-slate-900">${product.price?.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-slate-500">Stock</span>
-                              <span className={`font-medium ${
-                                product.stock_quantity < 10 ? 'text-red-600' : 'text-green-600'
-                              }`}>
-                                {product.stock_quantity}
-                              </span>
-                            </div>
-                            {product.weight > 0 && (
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-slate-500">Weight</span>
-                                <span className="font-medium text-slate-700">{product.weight} lbs</span>
+                          {product.related_items && product.related_items.length > 0 && (
+                            <div className="mt-4">
+                              <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase">Related Items</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {product.related_items.map((sku, idx) => (
+                                  <Badge key={idx} className="bg-blue-500/20 text-blue-300 border-blue-500/30 border text-xs">
+                                    {sku}
+                                  </Badge>
+                                ))}
                               </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              );
-            })}
+              ))
+            )}
           </div>
-        )}
+        </div>
+      </div>
 
-        {/* Edit Product Dialog */}
-        <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
-          <DialogContent>
+      {/* Edit Spec Sheet Dialog */}
+      {showSpecDialog && editingProduct && (
+        <Dialog open={showSpecDialog} onOpenChange={setShowSpecDialog}>
+          <DialogContent className="max-w-3xl bg-[#252525] border-[#3a3a3a] text-white max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Product - {editingProduct?.name}</DialogTitle>
+              <DialogTitle className="text-white">
+                Edit Spec Sheet - {editingProduct.sku}
+              </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            
+            <div className="space-y-6 mt-4">
+              {/* Components */}
               <div>
-                <Label htmlFor="category">Category</Label>
-                <Select
-                  value={editForm.category}
-                  onValueChange={(value) => setEditForm(prev => ({ ...prev, category: value }))}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pipes">Pipes</SelectItem>
-                    <SelectItem value="Fittings">Fittings</SelectItem>
-                    <SelectItem value="Valves">Valves</SelectItem>
-                    <SelectItem value="Tools">Tools</SelectItem>
-                    <SelectItem value="Accessories">Accessories</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-medium text-gray-300">Components</label>
+                  <Button
+                    size="sm"
+                    onClick={addComponent}
+                    className="bg-[#e91e63] hover:bg-[#d81b60] h-8 text-xs"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Component
+                  </Button>
+                </div>
+                
+                <div className="space-y-3">
+                  {specData.components.map((comp, idx) => (
+                    <div key={idx} className="bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg p-3">
+                      <div className="grid grid-cols-[1fr_80px_40px] gap-2 mb-2">
+                        <Input
+                          placeholder="Component name"
+                          value={comp.name}
+                          onChange={(e) => updateComponent(idx, 'name', e.target.value)}
+                          className="bg-[#252525] border-[#3a3a3a] text-white h-8 text-sm"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Qty"
+                          value={comp.quantity}
+                          onChange={(e) => updateComponent(idx, 'quantity', parseInt(e.target.value) || 1)}
+                          className="bg-[#252525] border-[#3a3a3a] text-white h-8 text-sm"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeComponent(idx)}
+                          className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <Input
+                        placeholder="Special notes (optional)"
+                        value={comp.notes || ''}
+                        onChange={(e) => updateComponent(idx, 'notes', e.target.value)}
+                        className="bg-[#252525] border-[#3a3a3a] text-white h-8 text-sm"
+                      />
+                    </div>
+                  ))}
+                  
+                  {specData.components.length === 0 && (
+                    <div className="text-center py-8 text-gray-500 text-sm">
+                      No components added yet
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Packing Notes */}
               <div>
-                <Label htmlFor="weight">Weight (lbs)</Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  step="0.01"
-                  value={editForm.weight}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, weight: e.target.value }))}
-                  placeholder="Enter weight"
-                  className="mt-1"
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Packing Notes</label>
+                <Textarea
+                  placeholder="Special packing instructions for this product..."
+                  value={specData.packing_notes}
+                  onChange={(e) => setSpecData(prev => ({ ...prev, packing_notes: e.target.value }))}
+                  className="bg-[#252525] border-[#3a3a3a] text-white min-h-24"
                 />
               </div>
+
+              {/* Related Items */}
               <div>
-                <Label htmlFor="box_type">Box Type</Label>
-                <Select
-                  value={editForm.box_type}
-                  onValueChange={(value) => setEditForm(prev => ({ ...prev, box_type: value }))}
+                <label className="text-sm font-medium text-gray-300 mb-2 block">Related Items (comma-separated SKUs)</label>
+                <Input
+                  placeholder="e.g., PROD-001, PROD-002"
+                  value={specData.related_items?.join(', ') || ''}
+                  onChange={(e) => setSpecData(prev => ({ 
+                    ...prev, 
+                    related_items: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                  }))}
+                  className="bg-[#252525] border-[#3a3a3a] text-white h-9"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-2 pt-4 border-t border-[#3a3a3a]">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowSpecDialog(false)}
+                  className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#3a3a3a]"
                 >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select box type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="LONG">LONG</SelectItem>
-                    <SelectItem value="MAIN">MAIN</SelectItem>
-                    <SelectItem value="XLFULL">XLFULL</SelectItem>
-                  </SelectContent>
-                </Select>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={saveSpecSheet}
+                  disabled={updateProductMutation.isPending}
+                  className="bg-[#e91e63] hover:bg-[#d81b60]"
+                >
+                  {updateProductMutation.isPending ? 'Saving...' : 'Save Spec Sheet'}
+                </Button>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingProduct(null)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSaveEdit}
-                disabled={updateProductMutation.isPending}
-                className="bg-teal-600 hover:bg-teal-700"
-              >
-                {updateProductMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      )}
     </div>
   );
 }
