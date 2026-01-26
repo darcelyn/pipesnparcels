@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import OrderFilters from "@/components/orders/OrderFilters";
+import { Input } from "@/components/ui/input";
 import PrintProductionList from "@/components/orders/PrintProductionList";
 import { 
   RefreshCw, 
@@ -20,7 +20,8 @@ import {
   Loader2,
   Printer,
   Package,
-  MoreVertical
+  MoreVertical,
+  Search
 } from "lucide-react";
 
 export default function Production() {
@@ -155,64 +156,97 @@ export default function Production() {
     return <PrintProductionList selectedItems={selectedItems} />;
   }
 
+  const getPriorityColor = (priority) => {
+    const colors = {
+      rush: 'bg-red-500/20 text-red-300 border-red-500/30',
+      priority: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+      normal: 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+    };
+    return colors[priority] || 'bg-gray-500/20 text-gray-300 border-gray-500/30';
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-[#1a1a1a]">
+      <div className="max-w-[1400px] mx-auto px-6 py-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                <Factory className="w-6 h-6 text-amber-700" />
-              </div>
-              Production Queue
-            </h1>
-            <p className="text-slate-500 mt-1">
-              {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''} in production
-            </p>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white mb-1">PRODUCTION</h1>
+          <p className="text-sm text-gray-400">
+            {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''} in production queue
+          </p>
+        </div>
+
+        {/* Controls Bar */}
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div className="flex-1 flex items-center gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Input
+                placeholder="Search orders..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                className="pl-10 bg-[#252525] border-[#3a3a3a] text-white placeholder:text-gray-500 h-9 text-sm"
+              />
+            </div>
+            
+            <Select value={filters.priority} onValueChange={(value) => handleFilterChange('priority', value)}>
+              <SelectTrigger className="w-36 bg-[#252525] border-[#3a3a3a] text-white h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#252525] border-[#3a3a3a]">
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="rush">Rush</SelectItem>
+                <SelectItem value="priority">Priority</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.source} onValueChange={(value) => handleFilterChange('source', value)}>
+              <SelectTrigger className="w-36 bg-[#252525] border-[#3a3a3a] text-white h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#252525] border-[#3a3a3a]">
+                <SelectItem value="all">All Sources</SelectItem>
+                <SelectItem value="magento">Magento</SelectItem>
+                <SelectItem value="manual">Manual</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div className="flex gap-3">
-            <Button 
-              variant="outline" 
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => refetch()}
               disabled={isFetching}
-              className="border-slate-300"
+              className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-9 text-sm"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-              Refresh
+              REFRESH
             </Button>
             {selectedItems.length > 0 && (
               <Button
+                size="sm"
                 onClick={handlePrintList}
-                className="bg-amber-600 hover:bg-amber-700"
+                className="bg-[#e91e63] hover:bg-[#d81b60] h-9 text-sm font-semibold"
               >
                 <Printer className="w-4 h-4 mr-2" />
-                Print Production List ({selectedItems.length})
+                PRINT LIST ({selectedItems.length})
               </Button>
             )}
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="mb-6">
-          <OrderFilters 
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onReset={handleResetFilters}
-            hideStatusFilter
-          />
-        </div>
-
         {/* Orders List */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="text-center py-20">
-            <Factory className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No orders in production</h3>
-            <p className="text-slate-500">
+            <Factory className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-white mb-2">No orders in production</h3>
+            <p className="text-gray-400">
               {filters.search || filters.priority !== 'all' 
                 ? 'Try adjusting your filters'
                 : 'Orders moved to production will appear here'}
@@ -221,93 +255,97 @@ export default function Production() {
         ) : (
           <div className="space-y-4">
             {filteredOrders.map(order => (
-              <Card key={order.id} className="border-slate-200">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="text-lg font-semibold text-slate-900">
-                          Order #{order.order_number}
-                        </h3>
-                        {order.priority === 'rush' && (
-                          <Badge className="bg-red-100 text-red-800">RUSH</Badge>
-                        )}
-                        {order.priority === 'priority' && (
-                          <Badge className="bg-orange-100 text-orange-800">Priority</Badge>
-                        )}
-                      </div>
-                      <p className="text-slate-600">{order.customer_name}</p>
+              <div key={order.id} className="bg-[#252525] border border-[#3a3a3a] rounded-lg p-5">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-lg font-semibold text-white">
+                        Order #{order.order_number}
+                      </h3>
+                      <Badge className={`${getPriorityColor(order.priority)} border text-xs px-2 py-0.5`}>
+                        {order.priority}
+                      </Badge>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: 'staging' })}>
-                          Move to Staging
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: 'pending' })}>
-                          Back to Pending
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: 'hold' })}>
-                          Put on Hold
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <p className="text-gray-400 text-sm">{order.customer_name}</p>
                   </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-[#3a3a3a]">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-[#252525] border-[#3a3a3a]">
+                      <DropdownMenuItem 
+                        onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: 'staging' })}
+                        className="text-white hover:bg-[#3a3a3a]"
+                      >
+                        Move to Staging
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: 'pending' })}
+                        className="text-white hover:bg-[#3a3a3a]"
+                      >
+                        Back to Pending
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => updateOrderMutation.mutate({ orderId: order.id, status: 'hold' })}
+                        className="text-white hover:bg-[#3a3a3a]"
+                      >
+                        Put on Hold
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
-                  <div className="space-y-2">
-                    {order.items?.map((item, idx) => {
-                      const shorthand = shorthandMap[item.sku];
-                      const selected = isItemSelected(order.order_number, item.sku);
-                      
-                      return (
-                        <div
-                          key={idx}
-                          onClick={(e) => {
-                            if (e.target.tagName !== 'BUTTON') {
-                              handleSelectItem(order.order_number, order.customer_name, item);
-                            }
-                          }}
-                          className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                            selected 
-                              ? 'border-amber-500 bg-amber-50' 
-                              : 'border-slate-200 hover:border-slate-300 bg-white'
-                          }`}
-                        >
-                          <Checkbox 
-                            checked={selected}
-                            onCheckedChange={(checked) => handleSelectItem(order.order_number, order.customer_name, item)}
-                            className="mt-1"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex-1">
-                                <p className="font-medium text-slate-900 mb-1">
-                                  {item.name}
+                <div className="space-y-2">
+                  {order.items?.map((item, idx) => {
+                    const shorthand = shorthandMap[item.sku];
+                    const selected = isItemSelected(order.order_number, item.sku);
+                    
+                    return (
+                      <div
+                        key={idx}
+                        onClick={(e) => {
+                          if (e.target.tagName !== 'BUTTON') {
+                            handleSelectItem(order.order_number, order.customer_name, item);
+                          }
+                        }}
+                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                          selected 
+                            ? 'border-[#e91e63] bg-[#e91e63]/10' 
+                            : 'border-[#3a3a3a] hover:border-[#4a4a4a] bg-[#1f1f1f]'
+                        }`}
+                      >
+                        <Checkbox 
+                          checked={selected}
+                          onCheckedChange={(checked) => handleSelectItem(order.order_number, order.customer_name, item)}
+                          className="mt-1 border-gray-500"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <p className="font-medium text-white mb-1">
+                                {item.name}
+                              </p>
+                              {item.options && (
+                                <p className="text-sm text-gray-400 mb-1">
+                                  {item.options}
                                 </p>
-                                {item.options && (
-                                  <p className="text-sm text-slate-600 mb-1">
-                                    {item.options}
-                                  </p>
-                                )}
-                                <p className="text-xs text-slate-500 font-mono">{item.sku}</p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-sm font-medium text-slate-600">Qty</p>
-                                <p className="text-2xl font-bold text-slate-900">{item.quantity}</p>
-                              </div>
+                              )}
+                              <p className="text-xs text-gray-500 font-mono">{item.sku}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs font-medium text-gray-400 uppercase">Qty</p>
+                              <p className="text-xl font-bold text-white">{item.quantity}</p>
                             </div>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             ))}
           </div>
         )}
