@@ -9,6 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import AddressDisplay from "@/components/shipping/AddressDisplay";
 import PackingList from "@/components/orders/PackingList";
 import { 
@@ -19,7 +26,8 @@ import {
   ArrowLeft,
   Loader2,
   AlertTriangle,
-  FileText
+  FileText,
+  ExternalLink
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -64,6 +72,7 @@ export default function CreateLabel() {
   const [showPackingList, setShowPackingList] = useState(false);
   const [shipmentCategory, setShipmentCategory] = useState(orderId ? 'order' : 'other');
   const [categoryNotes, setCategoryNotes] = useState('');
+  const [showPastLabels, setShowPastLabels] = useState(false);
 
   const { data: order, isLoading: orderLoading } = useQuery({
     queryKey: ['order', orderId],
@@ -97,6 +106,11 @@ export default function CreateLabel() {
         }
       };
     }
+  });
+
+  const { data: pastShipments = [] } = useQuery({
+    queryKey: ['past-shipments'],
+    queryFn: () => base44.entities.Shipment.list('-created_date', 50)
   });
 
   const createShipmentMutation = useMutation({
@@ -352,16 +366,26 @@ export default function CreateLabel() {
               )}
             </div>
           </div>
-          {order && (
+          <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={handlePrintPackingList}
+              onClick={() => setShowPastLabels(true)}
               className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a]"
             >
               <FileText className="w-4 h-4 mr-2" />
-              Print Packing List
+              Past Labels
             </Button>
-          )}
+            {order && (
+              <Button
+                variant="outline"
+                onClick={handlePrintPackingList}
+                className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a]"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Print Packing List
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -673,6 +697,76 @@ export default function CreateLabel() {
             )}
           </div>
         </div>
+
+        {/* Past Labels Dialog */}
+        <Dialog open={showPastLabels} onOpenChange={setShowPastLabels}>
+          <DialogContent className="bg-[#252525] border-[#3a3a3a] text-white max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-white">Past Labels</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 pt-4">
+              {pastShipments.map((shipment) => (
+                <div key={shipment.id} className="bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-white">{shipment.tracking_number || 'No tracking'}</span>
+                        {shipment.shipment_category && (
+                          <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 text-xs">
+                            {shipment.shipment_category.replace(/_/g, ' ')}
+                          </Badge>
+                        )}
+                      </div>
+                      {shipment.order_number && (
+                        <div className="text-sm text-gray-400">Order #{shipment.order_number}</div>
+                      )}
+                      {shipment.customer_name && (
+                        <div className="text-sm text-gray-400">{shipment.customer_name}</div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-white capitalize">{shipment.carrier}</div>
+                      {shipment.service_type && (
+                        <div className="text-xs text-gray-400">{shipment.service_type}</div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-3 border-t border-[#3a3a3a]">
+                    <div className="text-xs text-gray-400">
+                      {new Date(shipment.created_date).toLocaleString()}
+                      {shipment.shipping_cost && (
+                        <span className="ml-3">${shipment.shipping_cost.toFixed(2)}</span>
+                      )}
+                    </div>
+                    {shipment.label_url && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(shipment.label_url, '_blank')}
+                        className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-7"
+                      >
+                        <Printer className="w-3 h-3 mr-1" />
+                        View Label
+                        <ExternalLink className="w-3 h-3 ml-1" />
+                      </Button>
+                    )}
+                  </div>
+                  {shipment.category_notes && (
+                    <div className="mt-2 text-xs text-gray-400 italic">
+                      Note: {shipment.category_notes}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {pastShipments.length === 0 && (
+                <div className="text-center text-gray-500 py-8">
+                  No past labels found
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

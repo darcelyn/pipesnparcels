@@ -1,5 +1,6 @@
 import CreateLabel from './pages/CreateLabel';
 import Dashboard from './pages/Dashboard';
+import Inventory from './pages/Inventory';
 import ManualOrder from './pages/ManualOrder';
 import OnHold from './pages/OnHold';
 import Orders from './pages/Orders';
@@ -14,13 +15,13 @@ import SalesPage from './pages/SalesPage';
 import Settings from './pages/Settings';
 import Shipments from './pages/Shipments';
 import Staging from './pages/Staging';
-import Inventory from './pages/Inventory';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "CreateLabel": CreateLabel,
     "Dashboard": Dashboard,
+    "Inventory": Inventory,
     "ManualOrder": ManualOrder,
     "OnHold": OnHold,
     "Orders": Orders,
@@ -35,7 +36,6 @@ export const PAGES = {
     "Settings": Settings,
     "Shipments": Shipments,
     "Staging": Staging,
-    "Inventory": Inventory,
 }
 
 export const pagesConfig = {
