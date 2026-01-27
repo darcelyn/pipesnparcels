@@ -712,68 +712,91 @@ export default function CreateLabel() {
 
         {/* Past Labels Dialog */}
         <Dialog open={showPastLabels} onOpenChange={setShowPastLabels}>
-          <DialogContent className="bg-[#252525] border-[#3a3a3a] text-white max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="bg-[#252525] border-[#3a3a3a] text-white max-w-5xl max-h-[85vh]">
             <DialogHeader>
-              <DialogTitle className="text-white">Past Labels</DialogTitle>
+              <DialogTitle className="text-white text-xl">All Shipping Labels & Test Labels</DialogTitle>
+              <p className="text-sm text-gray-400 mt-1">Find and reprint any labels created in test or production mode</p>
             </DialogHeader>
-            <div className="space-y-3 pt-4">
+            <div className="space-y-3 pt-4 max-h-[calc(85vh-120px)] overflow-y-auto">
               {pastShipments.map((shipment) => (
-                <div key={shipment.id} className="bg-[#1f1f1f] border border-[#3a3a3a] rounded-lg p-4">
+                <div key={shipment.id} className="bg-[#1f1f1f] border-2 border-[#3a3a3a] hover:border-[#4a4a4a] rounded-lg p-4 transition-colors">
                   <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-white">{shipment.tracking_number || 'No tracking'}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-mono font-bold text-lg text-white">{shipment.tracking_number || 'No tracking'}</span>
                         {shipment.shipment_category && (
-                          <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 text-xs">
-                            {shipment.shipment_category.replace(/_/g, ' ')}
+                          <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-xs font-semibold">
+                            {shipment.shipment_category.replace(/_/g, ' ').toUpperCase()}
+                          </Badge>
+                        )}
+                        {!shipment.order_id && (
+                          <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs font-semibold">
+                            TEST LABEL
                           </Badge>
                         )}
                       </div>
-                      {shipment.order_number && (
-                        <div className="text-sm text-gray-400">Order #{shipment.order_number}</div>
-                      )}
-                      {shipment.customer_name && (
-                        <div className="text-sm text-gray-400">{shipment.customer_name}</div>
-                      )}
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        {shipment.order_number && (
+                          <div className="text-gray-400">
+                            <span className="text-gray-500">Order:</span> #{shipment.order_number}
+                          </div>
+                        )}
+                        {shipment.customer_name && (
+                          <div className="text-gray-400">
+                            <span className="text-gray-500">Customer:</span> {shipment.customer_name}
+                          </div>
+                        )}
+                        {shipment.destination_address && (
+                          <div className="text-gray-400 col-span-2">
+                            <span className="text-gray-500">To:</span> {shipment.destination_address.city}, {shipment.destination_address.state} {shipment.destination_address.zip}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-white capitalize">{shipment.carrier}</div>
+                    <div className="text-right ml-4">
+                      <div className="text-base font-bold text-white capitalize mb-1">{shipment.carrier}</div>
                       {shipment.service_type && (
-                        <div className="text-xs text-gray-400">{shipment.service_type}</div>
+                        <div className="text-xs text-gray-400 mb-2">{shipment.service_type}</div>
+                      )}
+                      {shipment.label_url && (
+                        <Button
+                          size="sm"
+                          onClick={() => window.open(shipment.label_url, '_blank')}
+                          className="bg-[#e91e63] hover:bg-[#d81b60] h-9 px-4"
+                        >
+                          <Printer className="w-4 h-4 mr-2" />
+                          Print Label
+                        </Button>
                       )}
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between pt-3 border-t border-[#3a3a3a]">
-                    <div className="text-xs text-gray-400">
-                      {new Date(shipment.created_date).toLocaleString()}
+                  <div className="flex items-center justify-between pt-3 border-t border-[#3a3a3a] text-xs">
+                    <div className="text-gray-400">
+                      <span className="text-gray-500">Created:</span> {new Date(shipment.created_date).toLocaleString()}
                       {shipment.shipping_cost && (
-                        <span className="ml-3">${shipment.shipping_cost.toFixed(2)}</span>
+                        <span className="ml-4"><span className="text-gray-500">Cost:</span> ${shipment.shipping_cost.toFixed(2)}</span>
+                      )}
+                      {shipment.weight && (
+                        <span className="ml-4"><span className="text-gray-500">Weight:</span> {shipment.weight} lbs</span>
                       )}
                     </div>
-                    {shipment.label_url && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => window.open(shipment.label_url, '_blank')}
-                        className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-7"
-                      >
-                        <Printer className="w-3 h-3 mr-1" />
-                        View Label
-                        <ExternalLink className="w-3 h-3 ml-1" />
-                      </Button>
+                    {shipment.shipped_by && (
+                      <div className="text-gray-500">by {shipment.shipped_by}</div>
                     )}
                   </div>
                   {shipment.category_notes && (
-                    <div className="mt-2 text-xs text-gray-400 italic">
-                      Note: {shipment.category_notes}
+                    <div className="mt-2 pt-2 border-t border-[#3a3a3a] text-xs text-gray-400 italic">
+                      <span className="text-gray-500">Note:</span> {shipment.category_notes}
                     </div>
                   )}
                 </div>
               ))}
               {pastShipments.length === 0 && (
-                <div className="text-center text-gray-500 py-8">
-                  No past labels found
+                <div className="text-center text-gray-500 py-12">
+                  <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg">No labels found</p>
+                  <p className="text-sm mt-1">Create your first label to see it here</p>
                 </div>
               )}
             </div>
