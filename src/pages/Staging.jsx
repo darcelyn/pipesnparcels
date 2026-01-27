@@ -358,14 +358,63 @@ export default function Staging() {
                         </div>
                         
                         <div>
-                          <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase">Order Items</h4>
-                          <div className="space-y-2">
-                            {order.items?.map((item, idx) => (
-                              <div key={idx} className="text-sm text-gray-300 flex justify-between">
-                                <span>{item.name}</span>
-                                <span className="text-gray-400">x{item.quantity}</span>
-                              </div>
-                            ))}
+                          <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase">Order Items & Specs</h4>
+                          <div className="space-y-3">
+                            {order.items?.map((item, idx) => {
+                              const product = products.find(p => p.sku === item.sku);
+                              return (
+                                <div key={idx} className="bg-[#252525] rounded-lg p-3 border border-[#3a3a3a]">
+                                  <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                      <div className="text-sm font-medium text-white">{item.name}</div>
+                                      <div className="text-xs text-gray-400">SKU: {item.sku}</div>
+                                    </div>
+                                    <span className="text-xs font-semibold text-teal-300 bg-teal-500/20 px-2 py-0.5 rounded border border-teal-500/30">
+                                      x{item.quantity}
+                                    </span>
+                                  </div>
+                                  
+                                  {product && (
+                                    <div className="mt-2 pt-2 border-t border-[#3a3a3a] space-y-2">
+                                      {product.components && product.components.length > 0 && (
+                                        <div>
+                                          <div className="text-xs font-medium text-gray-400 mb-1">Components:</div>
+                                          <div className="text-xs text-gray-300 space-y-0.5">
+                                            {product.components.map((comp, i) => (
+                                              <div key={i} className="flex justify-between">
+                                                <span>• {comp.name}</span>
+                                                {comp.quantity && <span className="text-gray-400">x{comp.quantity}</span>}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      
+                                      {product.packing_notes && (
+                                        <div>
+                                          <div className="text-xs font-medium text-gray-400 mb-1">Packing Notes:</div>
+                                          <div className="text-xs text-gray-300">{product.packing_notes}</div>
+                                        </div>
+                                      )}
+                                      
+                                      {product.box_type && (
+                                        <div>
+                                          <div className="text-xs font-medium text-gray-400 mb-1">Box Type:</div>
+                                          <div className="text-xs text-gray-300">{product.box_type}</div>
+                                        </div>
+                                      )}
+                                      
+                                      {product.related_items && product.related_items.length > 0 && (
+                                        <div>
+                                          <div className="text-xs font-medium text-gray-400 mb-1">Related Items:</div>
+                                          <div className="text-xs text-gray-300">{product.related_items.join(', ')}</div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
