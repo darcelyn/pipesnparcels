@@ -40,6 +40,11 @@ export default function Staging() {
     queryFn: () => base44.entities.Order.filter({ status: 'staging' })
   });
 
+  const { data: products = [] } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => base44.entities.Product.list()
+  });
+
   const bulkUpdateStatusMutation = useMutation({
     mutationFn: async ({ orderIds, status }) => {
       const updates = orderIds.map(id => 
