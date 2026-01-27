@@ -361,12 +361,24 @@ export default function CreateLabel() {
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-white">CREATE SHIPPING LABEL</h1>
-              {order && (
+              {order ? (
                 <p className="text-sm text-gray-400">Order #{order.order_number}</p>
+              ) : (
+                <p className="text-sm text-gray-400">Test Label Mode - No order attached</p>
               )}
             </div>
           </div>
           <div className="flex gap-2">
+            {orderId && (
+              <Button
+                variant="outline"
+                onClick={() => window.location.href = createPageUrl('CreateLabel')}
+                className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a]"
+              >
+                <Package className="w-4 h-4 mr-2" />
+                New Test Label
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={() => setShowPastLabels(true)}
