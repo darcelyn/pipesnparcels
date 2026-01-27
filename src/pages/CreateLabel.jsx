@@ -129,7 +129,7 @@ export default function CreateLabel() {
 
   useEffect(() => {
     if (order?.total_weight) {
-      // Magento exports weight in oz
+      // Weight from orders is already in oz
       const totalOz = order.total_weight;
       const lbs = Math.floor(totalOz / 16);
       const oz = Math.round(totalOz % 16);
