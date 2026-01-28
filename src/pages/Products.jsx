@@ -21,7 +21,10 @@ import {
   MoreVertical,
   Plus,
   X,
-  Package
+  Package,
+  Upload,
+  Image as ImageIcon,
+  FileText
 } from "lucide-react";
 
 export default function Products() {
@@ -36,6 +39,8 @@ export default function Products() {
     packing_notes: '',
     related_items: []
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
 
   const { data: products = [], isLoading, refetch, isFetching } = useQuery({
     queryKey: ['products'],
@@ -126,6 +131,29 @@ export default function Products() {
       id: editingProduct.id,
       data: specData
     });
+  };
+
+  const handleImageUpload = async (productId, file) => {
+    setUploadingImage(true);
+    try {
+      const { data } = await base44.integrations.Core.UploadFile({ file });
+      await updateProductMutation.mutateAsync({
+        id: productId,
+        data: { image_url: data.file_url }
+      });
+    } catch (error) {
+      alert('Failed to upload image: ' + error.message);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleCategoryChange = (productId, newCategory) => {
+    updateProductMutation.mutate({
+      id: productId,
+      data: { category: newCategory }
+    });
+    setEditingCategory(null);
   };
 
   const getCategoryColor = (category) => {
@@ -272,12 +300,41 @@ export default function Products() {
                       {product.sku}
                     </div>
                     
-                    <div className="text-white">{product.name}</div>
+                    <div className="text-white flex items-center gap-2">
+                      {product.image_url && (
+                        <img src={product.image_url} alt={product.name} className="w-8 h-8 rounded object-cover" />
+                      )}
+                      {product.name}
+                    </div>
                     
                     <div>
-                      <Badge className={`${getCategoryColor(product.category)} border text-xs px-2 py-0.5`}>
-                        {product.category}
-                      </Badge>
+                      {editingCategory === product.id ? (
+                        <Select 
+                          value={product.category} 
+                          onValueChange={(value) => handleCategoryChange(product.id, value)}
+                        >
+                          <SelectTrigger className="w-32 h-7 bg-[#1f1f1f] border-[#3a3a3a] text-white text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#252525] border-[#3a3a3a]">
+                            <SelectItem value="Pipes">Pipes</SelectItem>
+                            <SelectItem value="Fittings">Fittings</SelectItem>
+                            <SelectItem value="Valves">Valves</SelectItem>
+                            <SelectItem value="Tools">Tools</SelectItem>
+                            <SelectItem value="Accessories">Accessories</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <button
+                          onClick={() => setEditingCategory(product.id)}
+                          className="hover:opacity-70 transition-opacity"
+                        >
+                          <Badge className={`${getCategoryColor(product.category)} border text-xs px-2 py-0.5`}>
+                            {product.category}
+                          </Badge>
+                        </button>
+                      )}
                     </div>
                     
                     <div className="text-gray-300">
@@ -308,17 +365,34 @@ export default function Products() {
                         <DropdownMenuContent align="end" className="bg-[#252525] border-[#3a3a3a]">
                           <DropdownMenuItem
                             onClick={() => openSpecDialog(product)}
-                            className="text-white hover:bg-[#3a3a3a]"
+                            className="text-white hover:bg-[#3a3a3a] cursor-pointer"
                           >
-                            <Package className="w-4 h-4 mr-2" />
-                            Edit Spec Sheet
+                            <FileText className="w-4 h-4 mr-2" />
+                            View Spec Sheet
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => document.getElementById(`image-upload-${product.id}`)?.click()}
+                            className="text-white hover:bg-[#3a3a3a] cursor-pointer"
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload Image
+                          </DropdownMenuItem>
+                          <input
+                            id={`image-upload-${product.id}`}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleImageUpload(product.id, file);
+                            }}
+                            className="hidden"
+                          />
                           <DropdownMenuItem
                             onClick={() => updateProductMutation.mutate({
                               id: product.id,
                               data: { status: product.status === 'enabled' ? 'disabled' : 'enabled' }
                             })}
-                            className="text-white hover:bg-[#3a3a3a]"
+                            className="text-white hover:bg-[#3a3a3a] cursor-pointer"
                           >
                             {product.status === 'enabled' ? 'Disable' : 'Enable'} Product
                           </DropdownMenuItem>
@@ -330,6 +404,27 @@ export default function Products() {
                   {/* Expanded Details */}
                   {expandedProducts.includes(product.id) && (
                     <div className="bg-[#1f1f1f] border-t border-[#3a3a3a] px-4 py-4">
+                      {product.image_url && (
+                        <div className="mb-4 flex items-center gap-4">
+                          <img 
+                            src={product.image_url} 
+                            alt={product.name} 
+                            className="w-24 h-24 rounded-lg object-cover border border-[#3a3a3a]" 
+                          />
+                          <div>
+                            <h4 className="text-xs font-semibold text-gray-400 uppercase mb-1">Product Image</h4>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => document.getElementById(`image-upload-${product.id}`)?.click()}
+                              className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-7 text-xs"
+                            >
+                              <Upload className="w-3 h-3 mr-1" />
+                              Change Image
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                       <div className="grid grid-cols-2 gap-6">
                         <div>
                           <h4 className="text-xs font-semibold text-gray-400 mb-3 uppercase">Components</h4>
