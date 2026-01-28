@@ -101,51 +101,48 @@ export default function ReadyToShip() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-[#1a1a1a]">
+      <div className="max-w-[1400px] mx-auto px-6 py-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-              <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-                <Truck className="w-6 h-6 text-teal-700" />
-              </div>
-              Ready to Ship
-            </h1>
-            <p className="text-slate-500 mt-1">
-              {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''} ready for label creation
-            </p>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white mb-1">READY TO SHIP</h1>
+          <p className="text-sm text-gray-400">
+            {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''} ready for label creation
+          </p>
+        </div>
+
+        {/* Controls Bar */}
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div className="flex-1">
+            <OrderFilters 
+              filters={filters}
+              onFilterChange={handleFilterChange}
+              onReset={handleResetFilters}
+              hideStatusFilter
+            />
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
+              size="sm"
               onClick={() => refetch()}
               disabled={isFetching}
-              className="border-slate-300"
+              className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a] h-9 text-sm"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-              Refresh
+              REFRESH
             </Button>
             {selectedOrders.length > 0 && (
               <Button 
+                size="sm"
                 onClick={handleBatchCreateLabels}
-                className="bg-teal-600 hover:bg-teal-700"
+                className="bg-[#e91e63] hover:bg-[#d81b60] h-9 text-sm font-semibold"
               >
                 <Tags className="w-4 h-4 mr-2" />
-                Create {selectedOrders.length} Label{selectedOrders.length !== 1 ? 's' : ''}
+                CREATE {selectedOrders.length} LABEL{selectedOrders.length !== 1 ? 'S' : ''}
               </Button>
             )}
           </div>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-6">
-          <OrderFilters 
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onReset={handleResetFilters}
-            hideStatusFilter
-          />
         </div>
 
         {/* Select All */}
@@ -154,8 +151,9 @@ export default function ReadyToShip() {
             <Checkbox 
               checked={selectedOrders.length === filteredOrders.length && filteredOrders.length > 0}
               onCheckedChange={handleSelectAll}
+              className="border-gray-500"
             />
-            <span className="text-sm text-slate-600">
+            <span className="text-sm text-gray-400">
               {selectedOrders.length > 0 
                 ? `${selectedOrders.length} selected`
                 : 'Select all'
@@ -167,20 +165,20 @@ export default function ReadyToShip() {
         {/* Orders List */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="text-center py-20">
-            <Truck className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-2">No orders ready to ship</h3>
-            <p className="text-slate-500">
+            <Truck className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-white mb-2">No orders ready to ship</h3>
+            <p className="text-gray-400">
               {filters.search || filters.priority !== 'all' 
                 ? 'Try adjusting your filters'
                 : 'Orders moved from staging will appear here'}
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {filteredOrders.map(order => (
               <OrderCard
                 key={order.id}
