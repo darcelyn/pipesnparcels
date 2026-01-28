@@ -64,22 +64,22 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-[#1a1a1a]">
+      <div className="max-w-[1400px] mx-auto px-6 py-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-            <p className="text-slate-500 mt-1">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
+            <h1 className="text-2xl font-bold text-white">DASHBOARD</h1>
+            <p className="text-gray-400 mt-1">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
           </div>
           <div className="flex gap-3">
             <Link to={createPageUrl('Orders')}>
-              <Button variant="outline" className="border-slate-300">
+              <Button variant="outline" className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a]">
                 View All Orders
               </Button>
             </Link>
             <Link to={createPageUrl('CreateLabel')}>
-              <Button className="bg-teal-600 hover:bg-teal-700">
+              <Button className="bg-[#e91e63] hover:bg-[#d81b60]">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Label
               </Button>
@@ -88,7 +88,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatsCard
             title="Pending Orders"
             value={pendingOrders.length}
@@ -122,14 +122,14 @@ export default function Dashboard() {
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Pending Orders */}
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Package className="w-5 h-5 text-teal-600" />
+              <CardTitle className="text-lg flex items-center gap-2 text-white">
+                <Package className="w-5 h-5 text-[#e91e63]" />
                 Orders Ready to Ship
               </CardTitle>
               <Link to={createPageUrl('Orders')}>
-                <Button variant="ghost" size="sm" className="text-teal-600">
+                <Button variant="ghost" size="sm" className="text-[#e91e63] hover:bg-[#2a2a2a]">
                   View All
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -139,14 +139,14 @@ export default function Dashboard() {
               {ordersLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="h-24 bg-slate-100 rounded-lg animate-pulse" />
+                    <div key={i} className="h-24 bg-[#1f1f1f] rounded-lg animate-pulse" />
                   ))}
                 </div>
               ) : pendingOrdersList.length === 0 ? (
                 <div className="text-center py-8">
-                  <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-                  <p className="text-slate-600">All caught up!</p>
-                  <p className="text-sm text-slate-400">No pending orders</p>
+                  <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
+                  <p className="text-white">All caught up!</p>
+                  <p className="text-sm text-gray-400">No pending orders</p>
                 </div>
               ) : (
                 pendingOrdersList.map(order => (
@@ -162,14 +162,14 @@ export default function Dashboard() {
           </Card>
 
           {/* Recent Shipments */}
-          <Card className="border-slate-200">
+          <Card className="bg-[#252525] border-[#3a3a3a]">
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Truck className="w-5 h-5 text-teal-600" />
+              <CardTitle className="text-lg flex items-center gap-2 text-white">
+                <Truck className="w-5 h-5 text-[#e91e63]" />
                 Recent Shipments
               </CardTitle>
               <Link to={createPageUrl('Shipments')}>
-                <Button variant="ghost" size="sm" className="text-teal-600">
+                <Button variant="ghost" size="sm" className="text-[#e91e63] hover:bg-[#2a2a2a]">
                   View All
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -179,14 +179,14 @@ export default function Dashboard() {
               {shipmentsLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="h-20 bg-slate-100 rounded-lg animate-pulse" />
+                    <div key={i} className="h-20 bg-[#1f1f1f] rounded-lg animate-pulse" />
                   ))}
                 </div>
               ) : recentShipments.length === 0 ? (
                 <div className="text-center py-8">
-                  <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-slate-600">No shipments yet</p>
-                  <p className="text-sm text-slate-400">Create your first label</p>
+                  <Package className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                  <p className="text-white">No shipments yet</p>
+                  <p className="text-sm text-gray-400">Create your first label</p>
                 </div>
               ) : (
                 recentShipments.map(shipment => (
