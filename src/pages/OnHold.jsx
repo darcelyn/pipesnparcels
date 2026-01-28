@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,7 +18,8 @@ import {
   AlertCircle,
   ChevronRight,
   MoreVertical,
-  Search
+  Search,
+  Save
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -25,6 +27,7 @@ export default function OnHold() {
   const queryClient = useQueryClient();
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [expandedOrders, setExpandedOrders] = useState([]);
+  const [editingNotes, setEditingNotes] = useState({});
   const [filters, setFilters] = useState({
     search: '',
     priority: 'all',
@@ -126,6 +129,13 @@ export default function OnHold() {
       manual: 'bg-blue-600/20 text-blue-400 border-blue-600/30'
     };
     return colors[source] || 'bg-gray-500/20 text-gray-300 border-gray-500/30';
+  };
+
+  const handleSaveNotes = (orderId) => {
+    updateOrderMutation.mutate({ 
+      id: orderId, 
+      data: { hold_notes: editingNotes[orderId] || '' } 
+    });
   };
 
   return (
@@ -322,7 +332,7 @@ export default function OnHold() {
                   {/* Expanded Details */}
                   {expandedOrders.includes(order.id) && (
                     <div className="bg-[#1f1f1f] border-t border-[#3a3a3a] px-4 py-4">
-                      <div className="grid grid-cols-2 gap-6">
+                      <div className="grid grid-cols-2 gap-6 mb-4">
                         <div>
                           <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase">Shipping Address</h4>
                           <div className="text-sm text-gray-300 space-y-1">
@@ -346,6 +356,28 @@ export default function OnHold() {
                             ))}
                           </div>
                         </div>
+                      </div>
+                      
+                      <div className="border-t border-[#3a3a3a] pt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-xs font-semibold text-gray-400 uppercase">Hold Notes</h4>
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveNotes(order.id)}
+                            disabled={updateOrderMutation.isPending}
+                            className="bg-[#e91e63] hover:bg-[#d81b60] h-7 px-3 text-xs"
+                          >
+                            <Save className="w-3 h-3 mr-1" />
+                            Save
+                          </Button>
+                        </div>
+                        <Textarea
+                          value={editingNotes[order.id] !== undefined ? editingNotes[order.id] : (order.hold_notes || '')}
+                          onChange={(e) => setEditingNotes(prev => ({ ...prev, [order.id]: e.target.value }))}
+                          placeholder="Add notes about why this order is on hold or any special instructions..."
+                          rows={3}
+                          className="bg-[#252525] border-[#3a3a3a] text-white placeholder:text-gray-500 text-sm"
+                        />
                       </div>
                     </div>
                   )}
