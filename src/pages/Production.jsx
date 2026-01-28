@@ -27,6 +27,7 @@ import {
 export default function Production() {
   const queryClient = useQueryClient();
   const [selectedItems, setSelectedItems] = useState([]);
+  const [selectedOrders, setSelectedOrders] = useState([]);
   const [showPrintView, setShowPrintView] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
@@ -60,6 +61,24 @@ export default function Production() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });
+      setSelectedOrders([]);
+    }
+  });
+
+  const bulkUpdateStatusMutation = useMutation({
+    mutationFn: async ({ orderIds, status }) => {
+      const user = await base44.auth.me();
+      const updates = orderIds.map(id => 
+        base44.entities.Order.update(id, { 
+          status,
+          ...(status === 'staging' ? { staged_by: user.email } : {})
+        })
+      );
+      return Promise.all(updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['production-orders'] });
+      setSelectedOrders([]);
     }
   });
 
@@ -135,6 +154,30 @@ export default function Production() {
 
   const isItemSelected = (orderNumber, sku) => {
     return selectedItems.some(i => i.order_number === orderNumber && i.sku === sku);
+  };
+
+  const handleSelectOrder = (orderId) => {
+    setSelectedOrders(prev => 
+      prev.includes(orderId) 
+        ? prev.filter(id => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
+  const handleSelectAllOrders = () => {
+    if (selectedOrders.length === filteredOrders.length) {
+      setSelectedOrders([]);
+    } else {
+      setSelectedOrders(filteredOrders.map(o => o.id));
+    }
+  };
+
+  const handleBulkStatusChange = (status) => {
+    if (selectedOrders.length === 0) return;
+    const statusLabel = status === 'staging' ? 'Staging' : status === 'pending' ? 'Pending' : 'Hold';
+    if (confirm(`Move ${selectedOrders.length} order(s) to ${statusLabel}?`)) {
+      bulkUpdateStatusMutation.mutate({ orderIds: selectedOrders, status });
+    }
   };
 
   const handlePrintList = async () => {
@@ -214,6 +257,18 @@ export default function Production() {
           </div>
 
           <div className="flex items-center gap-2">
+            {selectedOrders.length > 0 && (
+              <Select onValueChange={handleBulkStatusChange}>
+                <SelectTrigger className="w-48 bg-[#252525] border-[#3a3a3a] text-white h-9 text-sm">
+                  <SelectValue placeholder={`Change Status (${selectedOrders.length})`} />
+                </SelectTrigger>
+                <SelectContent className="bg-[#252525] border-[#3a3a3a]">
+                  <SelectItem value="staging">Move to Staging</SelectItem>
+                  <SelectItem value="pending">Back to Pending</SelectItem>
+                  <SelectItem value="hold">Put on Hold</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -255,18 +310,29 @@ export default function Production() {
         ) : (
           <div className="space-y-4">
             {filteredOrders.map(order => (
-              <div key={order.id} className="bg-[#252525] border border-[#3a3a3a] rounded-lg p-5">
+              <div key={order.id} className={`bg-[#252525] border rounded-lg p-5 ${
+                selectedOrders.includes(order.id) 
+                  ? 'border-[#e91e63] bg-[#e91e63]/5' 
+                  : 'border-[#3a3a3a]'
+              }`}>
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="text-lg font-semibold text-white">
-                        Order #{order.order_number}
-                      </h3>
-                      <Badge className={`${getPriorityColor(order.priority)} border text-xs px-2 py-0.5`}>
-                        {order.priority}
-                      </Badge>
+                  <div className="flex items-start gap-3">
+                    <Checkbox 
+                      checked={selectedOrders.includes(order.id)}
+                      onCheckedChange={() => handleSelectOrder(order.id)}
+                      className="mt-1 border-gray-500"
+                    />
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className="text-lg font-semibold text-white">
+                          Order #{order.order_number}
+                        </h3>
+                        <Badge className={`${getPriorityColor(order.priority)} border text-xs px-2 py-0.5`}>
+                          {order.priority}
+                        </Badge>
+                      </div>
+                      <p className="text-gray-400 text-sm">{order.customer_name}</p>
                     </div>
-                    <p className="text-gray-400 text-sm">{order.customer_name}</p>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
