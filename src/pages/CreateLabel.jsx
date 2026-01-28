@@ -456,7 +456,7 @@ export default function CreateLabel() {
               <CardContent className="space-y-4">
                 {/* Shipment Category */}
                 <div>
-                  <Label className="text-gray-300">Shipment Type</Label>
+                  <Label className="text-gray-300 block mb-2">Shipment Type</Label>
                   <Select value={shipmentCategory} onValueChange={setShipmentCategory}>
                     <SelectTrigger className="bg-[#1f1f1f] border-[#3a3a3a] text-white">
                       <SelectValue />
@@ -473,7 +473,7 @@ export default function CreateLabel() {
 
                 {shipmentCategory !== 'order' && (
                   <div>
-                    <Label className="text-gray-300">Notes</Label>
+                    <Label className="text-gray-300 block mb-2">Notes</Label>
                     <Textarea
                       value={categoryNotes}
                       onChange={(e) => setCategoryNotes(e.target.value)}
@@ -488,7 +488,7 @@ export default function CreateLabel() {
 
                 {/* Ship From */}
                 <div>
-                  <Label className="text-gray-300">Ship From</Label>
+                  <Label className="text-gray-300 block mb-2">Ship From</Label>
                   <Select value={shipFrom} onValueChange={setShipFrom}>
                     <SelectTrigger className="bg-[#1f1f1f] border-[#3a3a3a] text-white">
                       <SelectValue />
@@ -502,10 +502,10 @@ export default function CreateLabel() {
                 </div>
 
                 {/* Weight */}
-                <div>
-                  <Label className="text-gray-300">Weight</Label>
-                  <div className="flex gap-2 items-center">
-                    <div className="flex items-center gap-2">
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                  <div>
+                    <Label className="text-gray-300 block mb-2">Weight</Label>
+                    <div className="flex gap-2 items-center">
                       <Input
                         type="number"
                         min="0"
@@ -514,9 +514,7 @@ export default function CreateLabel() {
                         placeholder="0"
                         className="w-20 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                       />
-                      <span className="text-sm text-gray-400">lbs</span>
-                    </div>
-                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-400 min-w-[28px]">lbs</span>
                       <Input
                         type="number"
                         min="0"
@@ -526,9 +524,11 @@ export default function CreateLabel() {
                         placeholder="0"
                         className="w-20 bg-[#1f1f1f] border-[#3a3a3a] text-white"
                       />
-                      <span className="text-sm text-gray-400">oz</span>
+                      <span className="text-sm text-gray-400 min-w-[20px]">oz</span>
                     </div>
-                    <Button variant="outline" size="icon" className="ml-auto bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a]">
+                  </div>
+                  <div className="flex items-end">
+                    <Button variant="outline" size="icon" className="bg-transparent border-[#3a3a3a] text-white hover:bg-[#2a2a2a]">
                       <Scale className="w-4 h-4" />
                     </Button>
                   </div>
@@ -536,7 +536,7 @@ export default function CreateLabel() {
 
                 {/* Package */}
                 <div>
-                  <Label className="text-gray-300">Package</Label>
+                  <Label className="text-gray-300 block mb-2">Package</Label>
                   <Select value={packageType} onValueChange={setPackageType}>
                     <SelectTrigger className="bg-[#1f1f1f] border-[#3a3a3a] text-white">
                       <SelectValue />
@@ -557,7 +557,7 @@ export default function CreateLabel() {
 
                 {/* Size */}
                 <div>
-                  <Label className="text-gray-300">Size (in)</Label>
+                  <Label className="text-gray-300 block mb-2">Size (in)</Label>
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <Input
@@ -597,7 +597,7 @@ export default function CreateLabel() {
 
                 {/* Confirmation */}
                 <div>
-                  <Label className="text-gray-300">Confirmation</Label>
+                  <Label className="text-gray-300 block mb-2">Confirmation</Label>
                   <Select value={confirmationType} onValueChange={setConfirmationType}>
                     <SelectTrigger className="bg-[#1f1f1f] border-[#3a3a3a] text-white">
                       <SelectValue />
@@ -613,7 +613,7 @@ export default function CreateLabel() {
 
                 {/* Insurance */}
                 <div>
-                  <Label className="text-gray-300">Insurance</Label>
+                  <Label className="text-gray-300 block mb-2">Insurance</Label>
                   <Select value={insurance} onValueChange={setInsurance}>
                     <SelectTrigger className="bg-[#1f1f1f] border-[#3a3a3a] text-white">
                       <SelectValue />
@@ -629,7 +629,7 @@ export default function CreateLabel() {
                   </Select>
                   {insurance === 'custom' && (
                     <div className="mt-2">
-                      <Label className="text-gray-300">Insurance Amount</Label>
+                      <Label className="text-gray-300 block mb-2">Insurance Amount</Label>
                       <Input
                         type="number"
                         min="0"
@@ -637,7 +637,7 @@ export default function CreateLabel() {
                         value={customInsuranceAmount}
                         onChange={(e) => setCustomInsuranceAmount(e.target.value)}
                         placeholder="Enter amount"
-                        className="mt-1 bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
+                        className="bg-[#1f1f1f] border-[#3a3a3a] text-white placeholder:text-gray-500"
                       />
                     </div>
                   )}
@@ -652,7 +652,7 @@ export default function CreateLabel() {
 
                 {/* Service - Moved to bottom */}
                 <div>
-                  <Label className="text-gray-300">Select Service</Label>
+                  <Label className="text-gray-300 block mb-2">Select Service</Label>
                   <Select value={selectedService} onValueChange={setSelectedService}>
                     <SelectTrigger className="bg-[#1f1f1f] border-[#3a3a3a] text-white">
                       <SelectValue placeholder="Select shipping service..." />
